@@ -84,7 +84,7 @@ static int check_report_filter(uint8_t procedure, le_advertising_info *info)
 	return 0;
 }
 
-// END FROM hcitool.c
+// END UNMODIFIED FROM hcitool.c
 
 static int print_advertising_devices(int dd, uint8_t filter_type)
 {
@@ -93,11 +93,6 @@ static int print_advertising_devices(int dd, uint8_t filter_type)
 	struct sigaction sa;
 	socklen_t olen;
 	int len;
-
-	// MOD START
-	int len_orig;
-	int i;
-	// MOD END
 
 	olen = sizeof(of);
 	if (getsockopt(dd, SOL_HCI, HCI_FILTER, &of, &olen) < 0) {
@@ -122,7 +117,7 @@ static int print_advertising_devices(int dd, uint8_t filter_type)
 	while (1) {
 		evt_le_meta_event *meta;
 		le_advertising_info *info;
-		char addr[18];
+		int i, rssi;
 
 		while ((len = read(dd, buf, sizeof(buf))) < 0) {
 			if (errno == EINTR && signal_received == SIGINT) {
@@ -135,10 +130,6 @@ static int print_advertising_devices(int dd, uint8_t filter_type)
 			goto done;
 		}
 
-		printf("LENS: %d %d %d %d\n", len, HCI_MAX_EVENT_SIZE, HCI_EVENT_HDR_SIZE, 
-			LE_ADVERTISING_INFO_SIZE);
-		len_orig = len;
-
 		ptr = buf + (1 + HCI_EVENT_HDR_SIZE);
 		len -= (1 + HCI_EVENT_HDR_SIZE);
 
@@ -149,28 +140,18 @@ static int print_advertising_devices(int dd, uint8_t filter_type)
 
 		/* Ignoring multiple reports */
 		info = (le_advertising_info *) (meta->data + 1);
-		if (check_report_filter(filter_type, info)) {
-			char name[30];
-
-			memset(name, 0, sizeof(name));
-
-			ba2str(&info->bdaddr, addr);
-
-			printf("%s\n", addr);
-
-			// MOD START
-			printf("BUF: ");
-			for (i=0; i<len_orig; i++) { // len_orig
-				printf("%x ", buf[i]);
-			}
-			printf("\n");
-
+		if (check_report_filter(filter_type, info)) {			
 			printf("ADV PACKET: ");
 			for (i=0; i<info->length; i++) {
 				printf("%x ", info->data[i]);
 			}
+			printf("\n");
 
-			printf("\n\n");
+			// the rssi is in the next byte after the packet
+			rssi = info->data[info->length]-256; 
+			printf("RSSI: %d dBm\n", rssi);
+
+			printf("\n");
 			// MOD END
 		}
 	}
@@ -191,7 +172,7 @@ static void cmd_lescan(int dev_id)
 	uint8_t scan_type = 0x01;
 	uint8_t filter_type = 0;
 	uint8_t filter_policy = 0x00;
-	uint16_t interval = htobs(0x0010); // MOD was: 0x0010
+	uint16_t interval = htobs(0x0010);
 	uint16_t window = htobs(0x0010);
 	uint8_t filter_dup = 1;
 
