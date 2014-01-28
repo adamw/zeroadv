@@ -11,6 +11,8 @@
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
 
+#include <zmq.h>
+
 // START FROM hcitool.c (unchanged)
 
 static volatile int signal_received = 0;
@@ -86,7 +88,12 @@ static int check_report_filter(uint8_t procedure, le_advertising_info *info)
 
 // END UNMODIFIED FROM hcitool.c
 
-static int print_advertising_devices(int dd, uint8_t filter_type)
+typedef struct {
+	void (*fn)(uint8_t *, int, int, void *);
+	void *cb_data;
+} adv_callback;
+
+static int scan_for_advertising_devices(int dd, uint8_t filter_type, adv_callback *callback)
 {
 	unsigned char buf[HCI_MAX_EVENT_SIZE], *ptr;
 	struct hci_filter nf, of;
@@ -117,7 +124,7 @@ static int print_advertising_devices(int dd, uint8_t filter_type)
 	while (1) {
 		evt_le_meta_event *meta;
 		le_advertising_info *info;
-		int i, rssi;
+		int rssi;
 
 		while ((len = read(dd, buf, sizeof(buf))) < 0) {
 			if (errno == EINTR && signal_received == SIGINT) {
@@ -141,18 +148,9 @@ static int print_advertising_devices(int dd, uint8_t filter_type)
 		/* Ignoring multiple reports */
 		info = (le_advertising_info *) (meta->data + 1);
 		if (check_report_filter(filter_type, info)) {			
-			printf("ADV PACKET: ");
-			for (i=0; i<info->length; i++) {
-				printf("%x ", info->data[i]);
-			}
-			printf("\n");
-
 			// the rssi is in the next byte after the packet
 			rssi = info->data[info->length]-256; 
-			printf("RSSI: %d dBm\n", rssi);
-
-			printf("\n");
-			// MOD END
+			callback->fn(info->data, info->length, rssi, callback->cb_data);
 		}
 	}
 
@@ -165,7 +163,7 @@ done:
 	return 0;
 }
 
-static void cmd_lescan(int dev_id)
+static void cmd_lescan(int dev_id, adv_callback *callback)
 {
 	int err, dd;
 	uint8_t own_type = 0x00;
@@ -200,7 +198,7 @@ static void cmd_lescan(int dev_id)
 
 	printf("LE Scan ...\n");
 
-	err = print_advertising_devices(dd, filter_type);
+	err = scan_for_advertising_devices(dd, filter_type, callback);
 	if (err < 0) {
 		perror("Could not receive advertising events");
 		exit(1);
@@ -217,8 +215,52 @@ static void cmd_lescan(int dev_id)
 
 //
 
+void adv_callback_print_fn(uint8_t *data, int data_length, int rssi, void *ignore) {
+	int i;
+
+	printf("ADV PACKET: ");
+	for (i=0; i<data_length; i++) {
+		printf("%x ", data[i]);
+	}
+	printf("\n");
+ 
+	printf("RSSI: %d dBm\n", rssi);
+
+	printf("\n");	
+}
+
+void adv_callback_zmq_fn(uint8_t *data, int data_length, int rssi, void *socket) {
+	zmq_send(socket, "X", 1, 0);
+}
+
+//
+
+static void report_zmq_version() {
+	int major, minor, patch;
+	zmq_version (&major, &minor, &patch);
+	printf ("Running 0MQ version: %d.%d.%d\n", major, minor, patch);
+}
+
 int main(int argc, char** argv) {
-	printf("Hello World\n");
-	cmd_lescan(-1);
+	//adv_callback adv_callback_print = { &adv_callback_print_fn, 0 };
+
+	report_zmq_version();
+
+	void *context = zmq_ctx_new();
+	void *publisher = zmq_socket(context, ZMQ_PUB);
+	int rc = zmq_bind(publisher, "tcp://*:8916");
+	if (rc < 0) {
+		perror("Bind failed");
+		exit(1);
+	}
+	printf("Bound\n");
+
+	adv_callback adv_callback_zmq = { &adv_callback_zmq_fn, publisher };
+	cmd_lescan(-1, &adv_callback_zmq);
+
+	printf("Closing ...");
+	zmq_close (publisher);
+	zmq_ctx_destroy (context);
+
 	return 0;
 }

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -lbluetooth
+CFLAGS=-Wall -lbluetooth -lzmq
 
 all:
 	$(CC) $(CFLAGS) zeroadv.c -o zeroadv
