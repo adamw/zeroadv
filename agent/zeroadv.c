@@ -124,7 +124,7 @@ static int scan_for_advertising_devices(int dd, uint8_t filter_type, adv_callbac
 	while (1) {
 		evt_le_meta_event *meta;
 		le_advertising_info *info;
-		int rssi;
+		uint8_t rssi;
 
 		while ((len = read(dd, buf, sizeof(buf))) < 0) {
 			if (errno == EINTR && signal_received == SIGINT) {
@@ -149,7 +149,7 @@ static int scan_for_advertising_devices(int dd, uint8_t filter_type, adv_callbac
 		info = (le_advertising_info *) (meta->data + 1);
 		if (check_report_filter(filter_type, info)) {			
 			// the rssi is in the next byte after the packet
-			rssi = info->data[info->length]-256; 
+			rssi = info->data[info->length]; 
 			callback->fn(info->data, info->length, rssi, callback->cb_data);
 		}
 	}
@@ -215,7 +215,7 @@ static void cmd_lescan(int dev_id, adv_callback *callback)
 
 //
 
-void adv_callback_print_fn(uint8_t *data, int data_length, int rssi, void *ignore) {
+void adv_callback_print_fn(uint8_t *data, int data_length, uint8_t rssi, void *ignore) {
 	int i;
 
 	printf("ADV PACKET: ");
@@ -229,8 +229,9 @@ void adv_callback_print_fn(uint8_t *data, int data_length, int rssi, void *ignor
 	printf("\n");	
 }
 
-void adv_callback_zmq_fn(uint8_t *data, int data_length, int rssi, void *socket) {
-	zmq_send(socket, "X", 1, 0);
+void adv_callback_zmq_fn(uint8_t *data, int data_length, uint8_t rssi, void *socket) {
+	zmq_send(socket, data, data_length, ZMQ_SNDMORE);
+	zmq_send(socket, &rssi, 1, 0);
 }
 
 //
@@ -242,8 +243,6 @@ static void report_zmq_version() {
 }
 
 int main(int argc, char** argv) {
-	//adv_callback adv_callback_print = { &adv_callback_print_fn, 0 };
-
 	report_zmq_version();
 
 	void *context = zmq_ctx_new();
@@ -255,6 +254,7 @@ int main(int argc, char** argv) {
 	}
 	printf("Bound\n");
 
+	//adv_callback adv_callback_print = { &adv_callback_print_fn, 0 };
 	adv_callback adv_callback_zmq = { &adv_callback_zmq_fn, publisher };
 	cmd_lescan(-1, &adv_callback_zmq);
 
