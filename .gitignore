@@ -16,8 +16,13 @@
 *.exe
 *.out
 *.app
-zeroadv
+agent/zeroadv
 
+.idea*
 .AppleDouble
 
-logs
+logs      
+
+# Scala
+target
+*.class
