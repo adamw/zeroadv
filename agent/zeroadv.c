@@ -91,9 +91,9 @@ static int check_report_filter(uint8_t procedure, le_advertising_info *info)
 typedef struct {
 	void (*fn)(uint8_t *, int, uint8_t, void *);
 	void *cb_data;
-} adv_callback;
+} adv_cb;
 
-static int scan_for_advertising_devices(int dd, uint8_t filter_type, adv_callback *callback)
+static int scan_for_advertising_devices(int dd, uint8_t filter_type, adv_cb *cb)
 {
 	unsigned char buf[HCI_MAX_EVENT_SIZE], *ptr;
 	struct hci_filter nf, of;
@@ -150,7 +150,7 @@ static int scan_for_advertising_devices(int dd, uint8_t filter_type, adv_callbac
 		if (check_report_filter(filter_type, info)) {			
 			// the rssi is in the next byte after the packet
 			rssi = info->data[info->length]; 
-			callback->fn(info->data, info->length, rssi, callback->cb_data);
+			cb->fn(info->data, info->length, rssi, cb->cb_data);
 		}
 	}
 
@@ -163,7 +163,7 @@ done:
 	return 0;
 }
 
-static void cmd_lescan(int dev_id, adv_callback *callback)
+static void cmd_lescan(int dev_id, adv_cb *cb)
 {
 	int err, dd;
 	uint8_t own_type = 0x00;
@@ -198,7 +198,7 @@ static void cmd_lescan(int dev_id, adv_callback *callback)
 
 	printf("LE Scan ...\n");
 
-	err = scan_for_advertising_devices(dd, filter_type, callback);
+	err = scan_for_advertising_devices(dd, filter_type, cb);
 	if (err < 0) {
 		perror("Could not receive advertising events");
 		exit(1);
@@ -216,7 +216,7 @@ static void cmd_lescan(int dev_id, adv_callback *callback)
 //
 
 /*
-static void adv_callback_print_fn(uint8_t *data, int data_length, uint8_t rssi, void *ignore) {
+static void adv_cb_print_fn(uint8_t *data, int data_length, uint8_t rssi, void *ignore) {
 	int i;
 
 	printf("ADV PACKET: ");
@@ -249,14 +249,15 @@ static void send_to_socket(void *socket, void *data, int data_length, int flags)
 typedef struct {
 	void *socket;
 	char *hostname;
-	int hostname_length;
-} adv_callback_zmq_data;
+	int hostname_len;
+} adv_cb_zmq_data;
 
-static void adv_callback_zmq_fn(uint8_t *data, int data_length, uint8_t rssi, 
-				void *_cb_data) {
-	adv_callback_zmq_data *cb_data = (adv_callback_zmq_data *) _cb_data;
+static void adv_cb_zmq_fn(uint8_t *data, int data_length, uint8_t rssi, 
+	void *_cb_data) {
+	
+	adv_cb_zmq_data *cb_data = (adv_cb_zmq_data *) _cb_data;
 
-	send_to_socket(cb_data->socket, cb_data->hostname, cb_data->hostname_length, ZMQ_SNDMORE);
+	send_to_socket(cb_data->socket, cb_data->hostname, cb_data->hostname_len, ZMQ_SNDMORE);
 	send_to_socket(cb_data->socket, data, data_length, ZMQ_SNDMORE);
 	send_to_socket(cb_data->socket, &rssi, 1, 0);
 }
@@ -288,10 +289,10 @@ int main(int argc, char** argv) {
 	}
 	printf("Bound\n");
 
-	//adv_callback adv_callback_print = { &adv_callback_print_fn, 0 };
-	adv_callback_zmq_data zmq_cb_data = { publisher, hostname, strlen(hostname) };
-	adv_callback adv_callback_zmq = { &adv_callback_zmq_fn, &zmq_cb_data };
-	cmd_lescan(-1, &adv_callback_zmq);
+	//adv_cb adv_cb_print = { &adv_cb_print_fn, 0 };
+	adv_cb_zmq_data zmq_cb_data = { publisher, hostname, strlen(hostname) };
+	adv_cb adv_cb_zmq = { &adv_cb_zmq_fn, &zmq_cb_data };
+	cmd_lescan(-1, &adv_cb_zmq);
 
 	printf("Closing ...");
 	zmq_close (publisher);
