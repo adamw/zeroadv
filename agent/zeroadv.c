@@ -89,7 +89,7 @@ static int check_report_filter(uint8_t procedure, le_advertising_info *info)
 // END UNMODIFIED FROM hcitool.c
 
 typedef struct {
-	void (*fn)(uint8_t *, int, int, void *);
+	void (*fn)(uint8_t *, int, uint8_t, void *);
 	void *cb_data;
 } adv_callback;
 
@@ -215,7 +215,8 @@ static void cmd_lescan(int dev_id, adv_callback *callback)
 
 //
 
-void adv_callback_print_fn(uint8_t *data, int data_length, uint8_t rssi, void *ignore) {
+/*
+static void adv_callback_print_fn(uint8_t *data, int data_length, uint8_t rssi, void *ignore) {
 	int i;
 
 	printf("ADV PACKET: ");
@@ -228,10 +229,26 @@ void adv_callback_print_fn(uint8_t *data, int data_length, uint8_t rssi, void *i
 
 	printf("\n");	
 }
+*/
 
-void adv_callback_zmq_fn(uint8_t *data, int data_length, uint8_t rssi, void *socket) {
-	zmq_send(socket, data, data_length, ZMQ_SNDMORE);
-	zmq_send(socket, &rssi, 1, 0);
+static void verify_all_sent(int should_send, int sent) {
+	if (sent < 0) {
+		perror("Error when sending data to socket");
+		exit(1);
+	}
+	if (sent >= 0 && sent < should_send) {
+		perror("Not all bytes sent");
+		exit(1);
+	}
+}
+
+static void send_to_socket(void *socket, void *data, int data_length, int flags) {
+	verify_all_sent(data_length, zmq_send(socket, data, data_length, flags));
+}
+
+static void adv_callback_zmq_fn(uint8_t *data, int data_length, uint8_t rssi, void *socket) {
+	send_to_socket(socket, data, data_length, ZMQ_SNDMORE);
+	send_to_socket(socket, &rssi, 1, 0);
 }
 
 //
@@ -243,6 +260,9 @@ static void report_zmq_version() {
 }
 
 int main(int argc, char** argv) {
+	// flush stdout immediately
+	setvbuf(stdout, NULL, _IONBF, 0);
+
 	report_zmq_version();
 
 	void *context = zmq_ctx_new();
