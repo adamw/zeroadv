@@ -15,12 +15,13 @@ class ZeroadvSubscriber(sink: ReceivedAdv => Unit) extends Logging {
     logger.info("Connected to: " + addresses.toList)
 
     while (!Thread.currentThread().isInterrupted) {
+      val agent = sub.recvStr()
       val advBytes = sub.recv()
       val rssiBytes = sub.recv()
 
       val rssi = toUnsigned(rssiBytes(0))-256
 
-      sink(ReceivedAdv(new DateTime(), "", advBytes, rssi))
+      sink(ReceivedAdv(new DateTime(), agent, advBytes, rssi))
     }
 
     sub.close()
