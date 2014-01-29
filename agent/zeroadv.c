@@ -246,9 +246,19 @@ static void send_to_socket(void *socket, void *data, int data_length, int flags)
 	verify_all_sent(data_length, zmq_send(socket, data, data_length, flags));
 }
 
-static void adv_callback_zmq_fn(uint8_t *data, int data_length, uint8_t rssi, void *socket) {
-	send_to_socket(socket, data, data_length, ZMQ_SNDMORE);
-	send_to_socket(socket, &rssi, 1, 0);
+typedef struct {
+	void *socket;
+	char *hostname;
+	int hostname_length;
+} adv_callback_zmq_data;
+
+static void adv_callback_zmq_fn(uint8_t *data, int data_length, uint8_t rssi, 
+				void *_cb_data) {
+	adv_callback_zmq_data *cb_data = (adv_callback_zmq_data *) _cb_data;
+
+	send_to_socket(cb_data->socket, cb_data->hostname, cb_data->hostname_length, ZMQ_SNDMORE);
+	send_to_socket(cb_data->socket, data, data_length, ZMQ_SNDMORE);
+	send_to_socket(cb_data->socket, &rssi, 1, 0);
 }
 
 //
@@ -260,6 +270,10 @@ static void report_zmq_version() {
 }
 
 int main(int argc, char** argv) {
+	char hostname[100];
+	gethostname(hostname, sizeof(hostname));
+	printf("Hostname: %s\n", hostname);
+
 	// flush stdout immediately
 	setvbuf(stdout, NULL, _IONBF, 0);
 
@@ -275,7 +289,8 @@ int main(int argc, char** argv) {
 	printf("Bound\n");
 
 	//adv_callback adv_callback_print = { &adv_callback_print_fn, 0 };
-	adv_callback adv_callback_zmq = { &adv_callback_zmq_fn, publisher };
+	adv_callback_zmq_data zmq_cb_data = { publisher, hostname, strlen(hostname) };
+	adv_callback adv_callback_zmq = { &adv_callback_zmq_fn, &zmq_cb_data };
 	cmd_lescan(-1, &adv_callback_zmq);
 
 	printf("Closing ...");
