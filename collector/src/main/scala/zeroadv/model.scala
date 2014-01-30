@@ -4,13 +4,13 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
 case class ReceivedAdv(when: DateTime, agent: Agent, adv: Array[Byte], rssi: Int) {
+  def advStr = adv.map(toUnsigned).map(Integer.toHexString)
+    .map(_.toUpperCase).map(x => if (x.length < 2) "0" + x else x)
+    .toList.mkString(" ")
+
+  def whenStr =  DateTimeFormat.mediumTime().print(when)
+
   override def toString = {
-    val advStr = adv.map(toUnsigned).map(Integer.toHexString)
-      .map(_.toUpperCase).map(x => if (x.length < 2) "0" + x else x)
-      .toList.mkString(" ")
-
-    val whenStr = DateTimeFormat.mediumTime().print(when)
-
     s"$agent@[$whenStr]: $advStr, RSSI = $rssi"
   }
 }
