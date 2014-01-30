@@ -11,4 +11,6 @@ libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.3",
   "org.joda" % "joda-convert" % "1.2",
   "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
-  "ch.qos.logback" % "logback-classic" % "1.0.13")
+  "ch.qos.logback" % "logback-classic" % "1.0.13",
+  "com.softwaremill.macwire" %% "macros" % "0.5",
+  "com.softwaremill.scalamacrodebug" %% "macros" % "0.3")
