@@ -2,7 +2,7 @@ package zeroadv
 
 class ReceivedAdvParser {
 
-  def parse(adv: ReceivedAdv): BeaconSpotting = {
+  def parse(adv: ReceivedAdv): Option[BeaconSpotting] = {
     null
   }
 }

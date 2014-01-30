@@ -3,7 +3,7 @@ package zeroadv
 class BeaconPosFromSpottings {
 
   def calculate(
-    agents: List[PositionedAgent],
+    agents: PositionedAgents,
     spottings: BeaconSpottings): PositionedBeacon = {
 
     null
