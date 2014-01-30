@@ -4,7 +4,7 @@ import org.zeromq.ZMQ
 import com.typesafe.scalalogging.slf4j.Logging
 import org.joda.time.DateTime
 
-class ZeroadvSubscriber(sink: ReceivedAdv => Unit) extends Logging {
+class ZeroadvSubscriber(sink: ReceivedAdv => Any) extends Logging {
   def subscribe(addresses: String*) {
     val context = ZMQ.context(1)
 
