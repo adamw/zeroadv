@@ -1,7 +1,9 @@
-package zeroadv
+package zeroadv.main
 
 import zeroadv.db.DbModule
 import akka.actor.{Props, ActorSystem}
+import zeroadv._
+import zeroadv.ReceivedAdv
 
 object WriteAdvToMongoAndLog extends App {
   val modules = new DbModule {
