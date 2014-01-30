@@ -10,5 +10,5 @@ object LogChangesInAdv extends App {
       last = adv.adv.toList
       println(adv.whenStr + ": " + adv.advStr)
     }
-  }).subscribe("tcp://pi1:8916")
+  }).subscribe(allPis: _*)
 }

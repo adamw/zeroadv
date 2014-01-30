@@ -17,5 +17,5 @@ object WriteAdvToMongoAndLog extends App {
     lazy val zeroadvSubscriber = wire[ZeroadvSubscriber]
   }
 
-  modules.zeroadvSubscriber.subscribe("tcp://pi1:8916")
+  modules.zeroadvSubscriber.subscribe(allPis: _*)
 }
