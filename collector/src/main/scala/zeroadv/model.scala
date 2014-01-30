@@ -30,6 +30,15 @@ case class BeaconSpottings(beacon: Beacon, history: Map[Agent, List[TimedRssi]])
   }
 }
 
+case class BeaconsSpottings(spottings: Map[Beacon, BeaconSpottings]) {
+  def addSpotting(spotting: BeaconSpotting, paramsLimit: Int): BeaconsSpottings = {
+    val b = spotting.beacon
+    val currentBS = spottings.getOrElse(b, BeaconSpottings(b, Map()))
+    val newBS = currentBS.addSpotting(spotting, paramsLimit)
+    copy(spottings = spottings + (b -> newBS))
+  }
+}
+
 case class Agent(name: String) {
   override def toString = name
 }
