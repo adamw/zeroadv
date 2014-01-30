@@ -12,6 +12,7 @@ object ReadAdvs extends App {
 
   Await.result(modules.advCollection.find(), 10.seconds).foreach(println)
 
+  modules.mongoDb.close()
   modules.system.shutdown()
   modules.system.awaitTermination()
 }

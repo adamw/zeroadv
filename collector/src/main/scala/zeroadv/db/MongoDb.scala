@@ -5,8 +5,12 @@ import akka.actor.ActorSystem
 import reactivemongo.api.collections.default.BSONCollection
 import reactivemongo.core.commands.GetLastError
 
-class MongoDb(db: DB, system: ActorSystem) {
+class MongoDb(_close: () => Unit, db: DB, system: ActorSystem) {
   def coll(name: String): BSONCollection = db(name)
+
+  def close() {
+    _close()
+  }
 
   val writeConcern = GetLastError(j = true)
 }
@@ -17,6 +21,9 @@ object MongoDb {
 
     val driver = new MongoDriver
     val connection = driver.connection(List("localhost"))
-    new MongoDb(connection("zeroadv"), system)
+    new MongoDb(
+      () => { connection.close(); driver.close() },
+      connection("zeroadv"),
+      system)
   }
 }
