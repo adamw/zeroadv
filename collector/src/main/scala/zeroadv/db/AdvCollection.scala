@@ -38,4 +38,8 @@ class AdvCollection(mongoDb: MongoDb, system: ActorSystem) {
   def write(adv: ReceivedAdv): Future[LastError] = {
     coll.insert(adv, mongoDb.writeConcern)
   }
+
+  def find(): Future[List[ReceivedAdv]] = {
+    coll.find(BSONDocument()).cursor[ReceivedAdv].collect[List]()
+  }
 }
