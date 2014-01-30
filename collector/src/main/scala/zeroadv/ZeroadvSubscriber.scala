@@ -21,7 +21,7 @@ class ZeroadvSubscriber(sink: ReceivedAdv => Any) extends Logging {
 
       val rssi = toUnsigned(rssiBytes(0))-256
 
-      sink(ReceivedAdv(new DateTime(), agent, advBytes, rssi))
+      sink(ReceivedAdv(new DateTime(), Agent(agent), advBytes, rssi))
     }
 
     sub.close()

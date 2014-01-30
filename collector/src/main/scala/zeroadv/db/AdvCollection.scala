@@ -1,6 +1,6 @@
 package zeroadv.db
 
-import zeroadv.ReceivedAdv
+import zeroadv.{Agent, ReceivedAdv}
 import reactivemongo.bson.{BSONDocument, BSONDocumentWriter, BSONDocumentReader}
 import org.joda.time.DateTime
 import akka.actor.ActorSystem
@@ -19,7 +19,7 @@ class AdvCollection(mongoDb: MongoDb, system: ActorSystem) {
     def read(bson: BSONDocument) = {
       ReceivedAdv(
         bson.getAs[DateTime]("when").get,
-        bson.getAs[String]("agent").get,
+        Agent(bson.getAs[String]("agent").get),
         bson.getAs[Array[Byte]]("adv").get,
         bson.getAs[Int]("rssi").get
       )
@@ -29,7 +29,7 @@ class AdvCollection(mongoDb: MongoDb, system: ActorSystem) {
   private implicit object ReceivedAdvWriter extends BSONDocumentWriter[ReceivedAdv] {
     def write(adv: ReceivedAdv) = BSONDocument(
       "when" -> adv.when,
-      "agent" -> adv.agent,
+      "agent" -> adv.agent.name,
       "adv" -> adv.adv,
       "rssi" -> adv.rssi
     )
