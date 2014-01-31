@@ -18,7 +18,9 @@ class ReceivedAdvParserTest extends FlatSpec with ShouldMatchers {
     ("11 07 AD 77 00 C6 A0 00 99 B2 E2 11 4C 24 54 4A 0C 96 0C FF 8C 00 90 B5 88 A8 57 8A 18 EA 63",
       GimbalBeacon(84, "90 B5 88 A8 57 8A 18 EA 63")),
     ("11 07 AD 77 00 C6 A0 00 99 B2 E2 11 4C 24 86 4A 0C 96 0C FF 8C 00 EF 82 55 26 B0 AA 96 DF A4",
-      GimbalBeacon(134, "EF 82 55 26 B0 AA 96 DF A4"))
+      GimbalBeacon(134, "EF 82 55 26 B0 AA 96 DF A4")),
+    ("02 01 1A 1A FF 4C 00 02 15 B9 40 7F 30 F5 F8 46 6E AF F9 25 55 6B 57 FE 6D 00 49 00 0A C5",
+      IBeaconBeacon("B9 40 7F 30 F5 F8 46 6E AF F9 25 55 6B 57 FE 6D", 73, 10, -59))
   )
 
   testDatas.foreach { testData =>

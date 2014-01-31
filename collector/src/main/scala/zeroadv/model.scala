@@ -17,7 +17,7 @@ case class TimedRssi(when: DateTime, rssi: Int)
 
 trait Beacon
 case class GimbalBeacon(temp: Int, id: String) extends Beacon
-case class EstimoteBeacon() extends Beacon
+case class IBeaconBeacon(uuid: String, major: Int, minor: Int, txPower: Int) extends Beacon
 
 case class BeaconSpotting(beacon: Beacon, agent: Agent, rssi: TimedRssi)
 
