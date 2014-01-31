@@ -4,9 +4,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
 case class ReceivedAdv(when: DateTime, agent: Agent, adv: Array[Byte], rssi: Int) {
-  def advStr = adv.map(toUnsigned).map(Integer.toHexString)
-    .map(_.toUpperCase).map(x => if (x.length < 2) "0" + x else x)
-    .toList.mkString(" ")
+  def advStr = byteArrayToHexString(adv)
 
   def whenStr =  DateTimeFormat.mediumTime().print(when)
 
@@ -18,7 +16,7 @@ case class ReceivedAdv(when: DateTime, agent: Agent, adv: Array[Byte], rssi: Int
 case class TimedRssi(when: DateTime, rssi: Int)
 
 trait Beacon
-case class GimbalBeacon() extends Beacon
+case class GimbalBeacon(temp: Int, id: String) extends Beacon
 case class EstimoteBeacon() extends Beacon
 
 case class BeaconSpotting(beacon: Beacon, agent: Agent, rssi: TimedRssi)
