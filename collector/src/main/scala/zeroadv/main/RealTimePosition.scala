@@ -1,10 +1,11 @@
 package zeroadv.main
 
-import zeroadv.{ZeroadvSubscriber, PositioningModule}
+import zeroadv.{ZeroadvSubscriber}
 import akka.actor.{ActorSystem, Props}
+import zeroadv.position.PositionModule
 
 object RealTimePosition extends App {
-  val modules = new PositioningModule {
+  val modules = new PositionModule {
     lazy val system = ActorSystem()
     lazy val positioningActor = system.actorOf(Props(newBeaconPositioningActor(_ => ())))
     lazy val zeroadvSubscriber = new ZeroadvSubscriber(positioningActor ! _)

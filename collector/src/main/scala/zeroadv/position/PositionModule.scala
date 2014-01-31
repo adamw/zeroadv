@@ -1,6 +1,8 @@
-package zeroadv
+package zeroadv.position
 
-trait PositioningModule {
+import zeroadv._
+
+trait PositionModule {
   lazy val beaconDistance = wire[BeaconDistance]
   lazy val beaconPosFromSpottings = wire[BeaconPosFromSpottings]
   lazy val receivedAdvParser = wire[ReceivedAdvParser]

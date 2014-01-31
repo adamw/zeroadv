@@ -1,7 +1,12 @@
-package zeroadv
+package zeroadv.position
 
 import akka.actor.Actor
 import com.typesafe.scalalogging.slf4j.Logging
+import zeroadv._
+import zeroadv.PositionedAgents
+import zeroadv.PositionedBeacon
+import scala.Some
+import zeroadv.BeaconsSpottings
 
 class BeaconPositioningActor(
   receivedAdvParser: ReceivedAdvParser,

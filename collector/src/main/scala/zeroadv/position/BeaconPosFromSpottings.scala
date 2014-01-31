@@ -1,4 +1,6 @@
-package zeroadv
+package zeroadv.position
+
+import zeroadv.{BeaconSpotting, PositionedBeacon, BeaconSpottings, PositionedAgents}
 
 class BeaconPosFromSpottings(beaconDistance: BeaconDistance) {
 

@@ -1,4 +1,6 @@
-package zeroadv
+package zeroadv.position
+
+import zeroadv.{IBeaconBeacon, GimbalBeacon, DimM, BeaconSpotting}
 
 class BeaconDistance {
   def distanceToBeacon(spotting: BeaconSpotting): DimM = {

@@ -1,4 +1,6 @@
-package zeroadv
+package zeroadv.position
+
+import zeroadv._
 
 class ReceivedAdvParser {
   private val gimbalPrefix_1_to_14 = hexStringToByteArray("11 07 AD 77 00 C6 A0 00 99 B2 E2 11 4C 24").toList

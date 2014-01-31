@@ -1,7 +1,8 @@
-package zeroadv
+package zeroadv.position
 
 import org.scalatest.{FlatSpec, ShouldMatchers}
 import org.joda.time.DateTime
+import zeroadv._
 
 class ReceivedAdvParserTest extends FlatSpec with ShouldMatchers {
   val agent = Agent("x")
