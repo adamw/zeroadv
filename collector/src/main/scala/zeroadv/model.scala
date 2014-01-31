@@ -15,7 +15,7 @@ case class ReceivedAdv(when: DateTime, agent: Agent, adv: Array[Byte], rssi: Int
 
 case class TimedRssi(when: DateTime, rssi: Int)
 
-trait Beacon
+sealed trait Beacon
 case class GimbalBeacon(temp: Int, id: String) extends Beacon
 case class IBeaconBeacon(uuid: String, major: Int, minor: Int, txPower: Int) extends Beacon
 
@@ -43,9 +43,9 @@ case class Agent(name: String) {
   override def toString = name
 }
 
-case class CoordM(coord: Double) extends AnyVal
+case class DimM(coord: Double) extends AnyVal
 
-case class PosM(x: CoordM, y: CoordM)
+case class PosM(x: DimM, y: DimM)
 
 case class PositionedAgent(agent: Agent, pos: PosM)
 
