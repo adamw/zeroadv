@@ -5,7 +5,7 @@ import zeroadv.{IBeaconBeacon, GimbalBeacon, DimM, BeaconSpotting}
 class BeaconDistance {
   def distanceToBeacon(spotting: BeaconSpotting): DimM = {
     val txPower = spotting.beacon match {
-      case g: GimbalBeacon => -59
+      case g: GimbalBeacon => -69
       case IBeaconBeacon(_, _, _, tp) => tp
     }
 

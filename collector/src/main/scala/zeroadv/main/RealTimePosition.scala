@@ -1,6 +1,6 @@
 package zeroadv.main
 
-import zeroadv.{ZeroadvSubscriber}
+import zeroadv.ZeroadvSubscriber
 import akka.actor.{ActorSystem, Props}
 import zeroadv.position.PositionModule
 

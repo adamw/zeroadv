@@ -10,7 +10,8 @@ class BeaconPosFromSpottings(beaconDistance: BeaconDistance) {
 
     val distances = spottings.history.map { case (agent, timedRssi) =>
       val dist = beaconDistance.distanceToBeacon(BeaconSpotting(spottings.beacon, agent, timedRssi.head))
-      agent + " -> " + dist.coord + "m"
+
+      s"$agent -> ${dist.prettyString}m (${timedRssi.head.rssi} dBm)"
     }.mkString("; ")
 
     println(distances)

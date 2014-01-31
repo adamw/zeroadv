@@ -43,7 +43,9 @@ case class Agent(name: String) {
   override def toString = name
 }
 
-case class DimM(coord: Double) extends AnyVal
+case class DimM(coord: Double) extends AnyVal {
+  def prettyString = "%02.2f".format(coord)
+}
 
 case class PosM(x: DimM, y: DimM)
 
