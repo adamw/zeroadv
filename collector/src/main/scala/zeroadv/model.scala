@@ -45,9 +45,25 @@ case class Agent(name: String) {
 
 case class DimM(coord: Double) extends AnyVal {
   def prettyString = "%02.2f".format(coord)
+  def +(o: DimM) = DimM(coord + o.coord)
+  def -(o: DimM) = DimM(coord - o.coord)
+  def *(o: DimM) = DimM(coord * o.coord)
+  def sqrt = DimM(math.sqrt(coord))
+
+  override def toString = coord + "m"
 }
 
-case class PosM(x: DimM, y: DimM)
+case class PosM(x: DimM, y: DimM) {
+  override def toString = s"($x, $y)"
+}
+
+object PosM {
+  def dist(p1: PosM, p2: PosM): DimM = {
+    val xd = p1.x - p2.x
+    val yd = p1.y - p2.y
+    (xd*xd + yd*yd).sqrt
+  }
+}
 
 case class PositionedAgent(agent: Agent, pos: PosM)
 

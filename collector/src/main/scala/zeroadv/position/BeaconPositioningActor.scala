@@ -11,7 +11,7 @@ import zeroadv.BeaconsSpottings
 class BeaconPositioningActor(
   receivedAdvParser: ReceivedAdvParser,
   beaconPosFromSpottings: BeaconPosFromSpottings,
-  positinedBeaconSink: PositionedBeacon => Any) extends Actor with Logging {
+  positionedBeaconSink: PositionedBeacon => Any) extends Actor with Logging {
 
   private val spottingsRssisLimit = 10
 
@@ -27,7 +27,7 @@ class BeaconPositioningActor(
           beacons = newBeacons
 
           val positionedBeacon = beaconPosFromSpottings.calculate(agents, spottings)
-          positinedBeaconSink(positionedBeacon)
+          positionedBeaconSink(positionedBeacon)
         }
       }
     }

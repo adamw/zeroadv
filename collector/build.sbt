@@ -14,6 +14,7 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.0.13",
   "com.softwaremill.macwire" %% "macros" % "0.5",
   "com.softwaremill.scalamacrodebug" %% "macros" % "0.3",
+  "org.apache.commons" % "commons-math3" % "3.2",
   "org.scalatest" %% "scalatest" % "2.0" % "test",
   "org.mockito" % "mockito-all" % "1.9.5" % "test"
 )
