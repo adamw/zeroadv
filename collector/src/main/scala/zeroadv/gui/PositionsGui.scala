@@ -8,16 +8,26 @@ import zeroadv.position.PositionModule
 object PositionsGui extends SimpleSwingApplication with PositionModule {
   lazy val system = ActorSystem()
   lazy val agents = PositionedAgents(List(
-    PositionedAgent(Agent("a"), PosM(DimM(2), DimM(2)))
+    PositionedAgent(Agent("pi1"), PosM(DimM(0), DimM(2.5))),
+    PositionedAgent(Agent("pi2"), PosM(DimM(3), DimM(0))),
+    PositionedAgent(Agent("pi3"), PosM(DimM(3), DimM(4.5)))
   ))
 
-  lazy val drawPanel = new DrawPanel(PosM(DimM(-1), DimM(-1)), PosM(DimM(9), DimM(9)), 400, 400)
+  lazy val drawPanel = new DrawPanel(PosM(DimM(-1), DimM(-1)), PosM(DimM(5.5), DimM(5.5)), 400, 400)
   drawPanel.updateAgents(agents)
 
   lazy val positioningActor = system.actorOf(Props(newBeaconPositioningActor(drawPanel.updateBeacon)))
   positioningActor ! agents
 
   lazy val zeroadvSubscriber = new ZeroadvSubscriber(positioningActor ! _)
+  val t = new Thread() {
+    override def run() = {
+
+      zeroadvSubscriber.subscribe(allPis: _*)
+    }
+  }
+  t.setDaemon(true)
+  t.start()
 
   lazy val mainFrame = new GuiMainFrame(drawPanel, system)
 

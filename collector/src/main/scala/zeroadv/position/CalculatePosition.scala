@@ -19,7 +19,7 @@ class CalculatePosition extends Logging {
       GoalType.MINIMIZE,
       new MultiDirectionalSimplex(2),
       new InitialGuess(Array(randomCoord, randomCoord)),
-      new MaxEval(1000)
+      new MaxEval(100000)
     )
 
     val resultPosM = PosM(DimM(result.getPoint.apply(0)), DimM(result.getPoint.apply(1)))
