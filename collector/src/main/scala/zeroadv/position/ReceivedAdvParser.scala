@@ -6,7 +6,7 @@ class ReceivedAdvParser {
   private val gimbalPrefix_1_to_14 = hexStringToByteArray("11 07 AD 77 00 C6 A0 00 99 B2 E2 11 4C 24").toList
   private val gimbalInfix_16_to_22 = hexStringToByteArray("4A 0C 96 0C FF 8C 00").toList
 
-  private val ibeaconPrefix_1_to_9 = hexStringToByteArray("02 01 1A 1A FF 4C 00 02 15").toList
+  private val ibeaconPrefix_1_to_9 = hexStringToByteArray("02 01 06 1A FF 4C 00 02 15").toList
 
   def parse(adv: ReceivedAdv): Option[BeaconSpotting] = {
     val beacon = if (isGimbalAdv(adv)) {
