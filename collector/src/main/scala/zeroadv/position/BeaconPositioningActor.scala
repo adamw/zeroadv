@@ -23,6 +23,8 @@ class BeaconPositioningActor(
       receivedAdvParser.parse(adv) match {
         case None => logger.error("Cannot parse adv: " + adv)
         case Some(parsed) => {
+          logger.debug(s"Received adv: $adv")
+
           val (spottings, newBeacons) = beacons.addSpotting(parsed, spottingsRssisLimit)
           beacons = newBeacons
 
