@@ -55,6 +55,8 @@ case class DimM(coord: Double) extends AnyVal {
 
 case class PosM(x: DimM, y: DimM) {
   override def toString = s"($x, $y)"
+
+  def -(o: PosM) = PosM(x - o.x, y - o.y)
 }
 
 object PosM {

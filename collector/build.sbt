@@ -18,3 +18,5 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.0" % "test",
   "org.mockito" % "mockito-all" % "1.9.5" % "test"
 )
+
+libraryDependencies <+= scalaVersion { "org.scala-lang" % "scala-swing" % _ }
