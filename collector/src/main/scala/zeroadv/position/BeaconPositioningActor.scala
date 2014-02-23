@@ -11,6 +11,7 @@ import zeroadv.BeaconsSpottings
 class BeaconPositioningActor(
   receivedAdvParser: ReceivedAdvParser,
   beaconPosFromSpottings: BeaconPosFromSpottings,
+  includeBeaconSpotting: BeaconSpotting => Boolean,
   positionedBeaconSink: PositionedBeacon => Any) extends Actor with Logging {
 
   private val spottingsRssisLimit = 10
@@ -21,15 +22,17 @@ class BeaconPositioningActor(
   def receive = {
     case adv: ReceivedAdv => {
       receivedAdvParser.parse(adv) match {
-        case None => logger.error("Cannot parse adv: " + adv)
+        case None => //logger.error("Cannot parse adv: " + adv)
         case Some(parsed) => {
-          logger.debug(s"Received adv: $adv")
+          if (includeBeaconSpotting(parsed)) {
+            logger.debug(s"Received adv: $adv")
 
-          val (spottings, newBeacons) = beacons.addSpotting(parsed, spottingsRssisLimit)
-          beacons = newBeacons
+            val (spottings, newBeacons) = beacons.addSpotting(parsed, spottingsRssisLimit)
+            beacons = newBeacons
 
-          val positionedBeacon = beaconPosFromSpottings.calculate(agents, spottings)
-          positionedBeaconSink(positionedBeacon)
+            val positionedBeacon = beaconPosFromSpottings.calculate(agents, spottings)
+            positionedBeaconSink(positionedBeacon)
+          }
         }
       }
     }
