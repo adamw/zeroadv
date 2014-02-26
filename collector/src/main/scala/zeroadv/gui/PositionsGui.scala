@@ -1,11 +1,13 @@
 package zeroadv.gui
 
-import scala.swing._
+import scala.swing.SimpleSwingApplication
 import zeroadv._
 import akka.actor.{Props, ActorSystem}
 import zeroadv.position.PositionModule
+import zeroadv.db.DbModule
+import zeroadv.zeromq.ZeroadvSubscriber
 
-object PositionsGui extends SimpleSwingApplication with PositionModule {
+object PositionsGui extends SimpleSwingApplication with PositionModule with DbModule {
   lazy val system = ActorSystem()
   lazy val agents = PositionedAgents(List(
     PositionedAgent(Agent("pi1"), PosM(DimM(0), DimM(2.5))),  // pink
@@ -14,7 +16,7 @@ object PositionsGui extends SimpleSwingApplication with PositionModule {
   ))
 
   override lazy val includeBeaconSpotting = (bs: BeaconSpotting) => bs.beacon match {
-    case IBeaconBeacon(_, 43024, _, _) => true
+    case IBeaconBeacon(_, 43024, _, _) => true                // light blue
     case _ => false
   }
 
@@ -24,15 +26,13 @@ object PositionsGui extends SimpleSwingApplication with PositionModule {
   lazy val positioningActor = system.actorOf(Props(newBeaconPositioningActor(drawPanel.updateBeacon)))
   positioningActor ! agents
 
-  lazy val zeroadvSubscriber = new ZeroadvSubscriber(positioningActor ! _)
-  val t = new Thread() {
-    override def run() = {
+  lazy val writeAdvToMongoActor = system.actorOf(Props(newWriteEventToMongoActor))
 
-      zeroadvSubscriber.subscribe(allPis: _*)
-    }
-  }
-  t.setDaemon(true)
-  t.start()
+  lazy val zeroadvSubscriber = new ZeroadvSubscriber({ adv =>
+    positioningActor ! adv
+    writeAdvToMongoActor ! adv
+  })
+  zeroadvSubscriber.subscribeAndListInDaemonThread(allPis)
 
   lazy val mainFrame = new GuiMainFrame(drawPanel, system)
 

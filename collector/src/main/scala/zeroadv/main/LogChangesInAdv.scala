@@ -1,6 +1,6 @@
 package zeroadv.main
 
-import zeroadv.ZeroadvSubscriber
+import zeroadv.zeromq.ZeroadvSubscriber
 
 object LogChangesInAdv extends App {
   private var last: List[Byte] = Nil
@@ -10,5 +10,5 @@ object LogChangesInAdv extends App {
       last = adv.adv.toList
       println(adv.whenStr + ": " + adv.advStr)
     }
-  }).subscribe(allPis: _*)
+  }).subscribeAndListen(allPis)
 }

@@ -1,7 +1,7 @@
 package zeroadv.main
 
-import zeroadv.ZeroadvSubscriber
+import zeroadv.zeromq.ZeroadvSubscriber
 
 object LogAdv extends App {
-  new ZeroadvSubscriber(println).subscribe(allPis: _*)
+  new ZeroadvSubscriber(println).subscribeAndListen(allPis)
 }

@@ -1,8 +1,8 @@
 package zeroadv.main
 
-import zeroadv.ZeroadvSubscriber
 import akka.actor.{ActorSystem, Props}
 import zeroadv.position.PositionModule
+import zeroadv.zeromq.ZeroadvSubscriber
 
 object RealTimePosition extends App {
   val modules = new PositionModule {
@@ -11,5 +11,5 @@ object RealTimePosition extends App {
     lazy val zeroadvSubscriber = new ZeroadvSubscriber(positioningActor ! _)
   }
 
-  modules.zeroadvSubscriber.subscribe(allPis: _*)
+  modules.zeroadvSubscriber.subscribeAndListen(allPis)
 }

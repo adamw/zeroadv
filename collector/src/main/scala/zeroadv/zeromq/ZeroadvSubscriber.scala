@@ -1,11 +1,13 @@
-package zeroadv
+package zeroadv.zeromq
 
 import org.zeromq.ZMQ
 import com.typesafe.scalalogging.slf4j.Logging
 import org.joda.time.DateTime
+import zeroadv._
+import zeroadv.ReceivedAdv
 
 class ZeroadvSubscriber(sink: ReceivedAdv => Any) extends Logging {
-  def subscribe(addresses: String*) {
+  def subscribeAndListen(addresses: List[String]) {
     val context = ZMQ.context(1)
 
     //  Socket to talk to clients
@@ -26,5 +28,15 @@ class ZeroadvSubscriber(sink: ReceivedAdv => Any) extends Logging {
 
     sub.close()
     context.term()
+  }
+  
+  def subscribeAndListInDaemonThread(addresses: List[String]) {
+    val t = new Thread() {
+      override def run() = {
+        subscribeAndListen(addresses)
+      }
+    }
+    t.setDaemon(true)
+    t.start()
   }
 }

@@ -4,7 +4,8 @@ import akka.actor.ActorSystem
 
 trait DbModule {
   lazy val mongoDb = MongoDb.connect(system)
-  lazy val advCollection = wire[AdvCollection]
+  lazy val eventCollection = wire[EventCollection]
+  def newWriteEventToMongoActor = wire[WriteEventToMongoActor]
 
   def system: ActorSystem
 }

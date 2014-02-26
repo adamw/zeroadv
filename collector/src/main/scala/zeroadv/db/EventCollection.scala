@@ -7,10 +7,10 @@ import akka.actor.ActorSystem
 import reactivemongo.core.commands.LastError
 import scala.concurrent.Future
 
-class AdvCollection(mongoDb: MongoDb, system: ActorSystem) {
+class EventCollection(mongoDb: MongoDb, system: ActorSystem) {
   import system.dispatcher
 
-  private val coll = mongoDb.coll("adv")
+  private val coll = mongoDb.coll("event")
 
   private def init() {}
   init()

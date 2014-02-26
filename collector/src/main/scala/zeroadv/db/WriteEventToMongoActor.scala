@@ -1,15 +1,15 @@
-package zeroadv
+package zeroadv.db
 
 import akka.actor.Actor
-import zeroadv.db.AdvCollection
 import com.typesafe.scalalogging.slf4j.Logging
+import zeroadv.ReceivedAdv
 
-class WriteAdvToMongoActor(advCollection: AdvCollection) extends Actor with Logging {
+class WriteEventToMongoActor(eventCollection: EventCollection) extends Actor with Logging {
   import context.dispatcher
 
   def receive = {
     case adv: ReceivedAdv => {
-      advCollection.write(adv).onFailure { case e: Exception =>
+      eventCollection.write(adv).onFailure { case e: Exception =>
         logger.error("Cannot write adv", e)
       }
     }
