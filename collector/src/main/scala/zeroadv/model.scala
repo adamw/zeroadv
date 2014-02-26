@@ -3,7 +3,9 @@ package zeroadv
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
-case class ReceivedAdv(when: DateTime, agent: Agent, adv: Array[Byte], rssi: Int) {
+sealed trait PositioningEvent
+
+case class ReceivedAdv(when: DateTime, agent: Agent, adv: Array[Byte], rssi: Int) extends PositioningEvent {
   def advStr = byteArrayToHexString(adv)
 
   def whenStr =  DateTimeFormat.mediumTime().print(when)
@@ -72,3 +74,7 @@ case class PositionedAgent(agent: Agent, pos: PosM)
 case class PositionedAgents(agents: List[PositionedAgent])
 
 case class PositionedBeacon(beacon: Beacon, pos: PosM)
+
+case class MarkPosition(when: DateTime, pos: PosM) extends PositioningEvent
+
+case class EndMark(when: DateTime) extends PositioningEvent

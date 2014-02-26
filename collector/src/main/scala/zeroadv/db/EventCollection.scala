@@ -1,11 +1,14 @@
 package zeroadv.db
 
-import zeroadv.{Agent, ReceivedAdv}
+import zeroadv._
 import reactivemongo.bson.{BSONDocument, BSONDocumentWriter, BSONDocumentReader}
 import org.joda.time.DateTime
 import akka.actor.ActorSystem
 import reactivemongo.core.commands.LastError
 import scala.concurrent.Future
+import zeroadv.ReceivedAdv
+import zeroadv.Agent
+import zeroadv.MarkPosition
 
 class EventCollection(mongoDb: MongoDb, system: ActorSystem) {
   import system.dispatcher
@@ -15,19 +18,35 @@ class EventCollection(mongoDb: MongoDb, system: ActorSystem) {
   private def init() {}
   init()
 
-  private implicit object ReceivedAdvReader extends BSONDocumentReader[ReceivedAdv] {
+  private val ReceivedAdvKind = "adv"
+  private val MarkPositionKind = "mark"
+  private val EndMarkKind = "endmark"
+
+  private implicit object PositioningEventReader extends BSONDocumentReader[PositioningEvent] {
     def read(bson: BSONDocument) = {
-      ReceivedAdv(
-        bson.getAs[DateTime]("when").get,
-        Agent(bson.getAs[String]("agent").get),
-        bson.getAs[Array[Byte]]("adv").get,
-        bson.getAs[Int]("rssi").get
-      )
+      val k = bson.getAs[String]("kind").get
+      k match {
+        case ReceivedAdvKind =>
+          ReceivedAdv(
+            bson.getAs[DateTime]("when").get,
+            Agent(bson.getAs[String]("agent").get),
+            bson.getAs[Array[Byte]]("adv").get,
+            bson.getAs[Int]("rssi").get
+          )
+        case MarkPositionKind =>
+          MarkPosition(
+            bson.getAs[DateTime]("when").get,
+            PosM(DimM(bson.getAs[Double]("x").get), DimM(bson.getAs[Double]("y").get))
+          )
+        case EndMarkKind =>
+          EndMark(bson.getAs[DateTime]("when").get)
+      }
     }
   }
 
   private implicit object ReceivedAdvWriter extends BSONDocumentWriter[ReceivedAdv] {
     def write(adv: ReceivedAdv) = BSONDocument(
+      "kind" -> ReceivedAdvKind,
       "when" -> adv.when,
       "agent" -> adv.agent.name,
       "adv" -> adv.adv,
@@ -35,11 +54,31 @@ class EventCollection(mongoDb: MongoDb, system: ActorSystem) {
     )
   }
 
-  def write(adv: ReceivedAdv): Future[LastError] = {
-    coll.insert(adv, mongoDb.writeConcern)
+  private implicit object MarkPositionWriter extends BSONDocumentWriter[MarkPosition] {
+    def write(mp: MarkPosition) = BSONDocument(
+      "kind" -> MarkPositionKind,
+      "when" -> mp.when,
+      "x" -> mp.pos.x.coord,
+      "y" -> mp.pos.y.coord
+    )
   }
 
-  def find(): Future[List[ReceivedAdv]] = {
-    coll.find(BSONDocument()).cursor[ReceivedAdv].collect[List]()
+  private implicit object EndMarkWriter extends BSONDocumentWriter[EndMark] {
+    def write(em: EndMark) = BSONDocument(
+      "kind" -> EndMarkKind,
+      "when" -> em.when
+    )
+  }
+
+  def write(event: PositioningEvent): Future[LastError] = {
+    event match {
+      case adv: ReceivedAdv => coll.insert(adv, mongoDb.writeConcern)
+      case mp: MarkPosition => coll.insert(mp, mongoDb.writeConcern)
+      case em: EndMark => coll.insert(em, mongoDb.writeConcern)
+    }
+  }
+
+  def find(): Future[List[PositioningEvent]] = {
+    coll.find(BSONDocument()).cursor[PositioningEvent].collect[List]()
   }
 }
