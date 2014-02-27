@@ -2,9 +2,7 @@ package zeroadv.zeromq
 
 import org.zeromq.ZMQ
 import com.typesafe.scalalogging.slf4j.Logging
-import org.joda.time.DateTime
 import zeroadv._
-import zeroadv.ReceivedAdv
 
 class ZeroadvSubscriber(sink: ReceivedAdv => Any) extends Logging {
   def subscribeAndListen(addresses: List[String]) {
@@ -23,7 +21,7 @@ class ZeroadvSubscriber(sink: ReceivedAdv => Any) extends Logging {
 
       val rssi = toUnsigned(rssiBytes(0))-256
 
-      sink(ReceivedAdv(new DateTime(), Agent(agent), advBytes, rssi))
+      sink(ReceivedAdv(now(), Agent(agent), advBytes, rssi))
     }
 
     sub.close()

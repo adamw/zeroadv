@@ -6,6 +6,7 @@ import java.awt.{Dimension, Color}
 import zeroadv.PositionedAgents
 import zeroadv.PositionedAgent
 import zeroadv.DimM
+import scala.swing.event.MouseClicked
 
 class DrawPanel(bottomLeft: PosM, topRight: PosM, width: Int, height: Int) extends Panel {
   private val widthM = topRight.x - bottomLeft.x
@@ -17,10 +18,18 @@ class DrawPanel(bottomLeft: PosM, topRight: PosM, width: Int, height: Int) exten
   private def dimMToWidth(dim: DimM): Int = (dim.coord*scaleX).toInt
   private def dimMToHeight(dim: DimM): Int = (dim.coord*scaleY).toInt
 
+  private var _lastClick: Option[PosM] = None
+  def lastClick = _lastClick
+
   private def posMToPoint(pos: PosM): (Int, Int) = {
     val relative = pos - bottomLeft
     (dimMToWidth(relative.x), height-dimMToHeight(relative.y))
   }
+
+  private def pointToPosM(x: Double, y: Double): PosM = PosM(
+    DimM(x/width*widthM.coord) + bottomLeft.x,
+    DimM((height-y)/height*heightM.coord) + bottomLeft.y
+  )
 
   private var beacons = Map[Beacon, PosM]()
   private var agents = PositionedAgents(Nil)
@@ -28,6 +37,7 @@ class DrawPanel(bottomLeft: PosM, topRight: PosM, width: Int, height: Int) exten
   override protected def paintComponent(g: Graphics2D) = {
     paintAgents(g)
     paintBeacons(g)
+    lastClick.foreach(rectAtPoint(g, _, Color.YELLOW))
   }
 
   private def paintAgents(g: Graphics2D) {
@@ -35,9 +45,13 @@ class DrawPanel(bottomLeft: PosM, topRight: PosM, width: Int, height: Int) exten
   }
 
   private def paintAgent(g: Graphics2D, agent: PositionedAgent) {
-    g.setColor(Color.RED)
+    rectAtPoint(g, agent.pos, Color.RED)
+  }
 
-    val (x, y) = posMToPoint(agent.pos)
+  private def rectAtPoint(g: Graphics2D, center: PosM, color: Color) {
+    g.setColor(color)
+
+    val (x, y) = posMToPoint(center)
     val w = 20
     val h = 20
 
@@ -68,4 +82,13 @@ class DrawPanel(bottomLeft: PosM, topRight: PosM, width: Int, height: Int) exten
     agents = _agents
     repaint()
   }
+
+  reactions += {
+    case c: MouseClicked => {
+      _lastClick = Some(pointToPosM(c.point.getX, c.point.getY))
+      repaint()
+    }
+  }
+
+  listenTo(mouse.clicks)
 }

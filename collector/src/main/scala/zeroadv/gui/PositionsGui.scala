@@ -6,9 +6,13 @@ import akka.actor.{Props, ActorSystem}
 import zeroadv.position.PositionModule
 import zeroadv.db.DbModule
 import zeroadv.zeromq.ZeroadvSubscriber
+import com.typesafe.scalalogging.slf4j.Logging
+import scala.concurrent.duration._
 
-object PositionsGui extends SimpleSwingApplication with PositionModule with DbModule {
+object PositionsGui extends SimpleSwingApplication with PositionModule with DbModule with Logging {
   lazy val system = ActorSystem()
+  import system.dispatcher
+
   lazy val agents = PositionedAgents(List(
     PositionedAgent(Agent("pi1"), PosM(DimM(0), DimM(2.5))),  // pink
     PositionedAgent(Agent("pi2"), PosM(DimM(3), DimM(0))),    // transparent
@@ -23,18 +27,30 @@ object PositionsGui extends SimpleSwingApplication with PositionModule with DbMo
   lazy val drawPanel = new DrawPanel(PosM(DimM(-1), DimM(-1)), PosM(DimM(5.5), DimM(5.5)), 400, 400)
   drawPanel.updateAgents(agents)
 
+  lazy val markPanel = new MarkPanel(
+    () => drawPanel.lastClick.foreach { pos =>
+      logger.info(s"Mark at: $pos")
+      writeEventToMongoActor ! MarkPosition(now(), pos)
+    },
+    () => {
+      logger.info("End mark")
+      writeEventToMongoActor ! EndMark(now())
+    }
+  )
+  system.scheduler.schedule(1.second, 1.second, markPanel)
+
   lazy val positioningActor = system.actorOf(Props(newBeaconPositioningActor(drawPanel.updateBeacon)))
   positioningActor ! agents
 
-  lazy val writeAdvToMongoActor = system.actorOf(Props(newWriteEventToMongoActor))
+  lazy val writeEventToMongoActor = system.actorOf(Props(newWriteEventToMongoActor))
 
   lazy val zeroadvSubscriber = new ZeroadvSubscriber({ adv =>
     positioningActor ! adv
-    writeAdvToMongoActor ! adv
+    writeEventToMongoActor ! adv
   })
   zeroadvSubscriber.subscribeAndListInDaemonThread(allPis)
 
-  lazy val mainFrame = new GuiMainFrame(drawPanel, system)
+  lazy val mainFrame = new GuiMainFrame(drawPanel, markPanel, system)
 
   override def top = mainFrame
 }
