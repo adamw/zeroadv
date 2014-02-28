@@ -172,7 +172,7 @@ static void cmd_lescan(int dev_id, adv_cb *cb)
 	uint8_t filter_policy = 0x00;
 	uint16_t interval = htobs(0x0010);
 	uint16_t window = htobs(0x0010);
-	uint8_t filter_dup = 1;
+	uint8_t filter_dup = 0;	// Important! Can't be 1!			
 
 	if (dev_id < 0)
 		dev_id = hci_get_route(NULL);
