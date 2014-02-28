@@ -10,21 +10,12 @@ class MarkPanel(markStartAction: () => Unit, markEndAction: () => Unit) extends 
   private val btn = new Button {
     text = ""
     action = Action("") {
-      marked = !marked
       runAction()
       updateText()
     }
 
-    def updateText() {
-      if (marked) {
-        val sinceStart = (System.currentTimeMillis()-markStart)/1000L
-        text = s"Mark end (since start: ${sinceStart}s)"
-      } else {
-        text = "Mark start"
-      }
-    }
-
     def runAction() {
+      marked = !marked
       if (marked) {
         markStartAction()
         markStart = System.currentTimeMillis()
@@ -33,13 +24,32 @@ class MarkPanel(markStartAction: () => Unit, markEndAction: () => Unit) extends 
       }
     }
 
+    def updateText() {
+      if (marked) {
+        val sinceStart = secondsSinceStart()
+        text = s"Mark end (since start: ${sinceStart}s)"
+      } else {
+        text = "Mark start"
+      }
+    }
+    
+    def finishIfAfter60Seconds() {
+      if (marked && secondsSinceStart() >= 60) {
+        runAction()
+      }
+
+      updateText()
+    }
+    
+    private def secondsSinceStart() = (System.currentTimeMillis()-markStart)/1000
+
     updateText()
   }
 
   layout(btn) = North
 
   def run() {
-    btn.updateText()
+    btn.finishIfAfter60Seconds()
     repaint()
   }
 }
