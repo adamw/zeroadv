@@ -1,7 +1,11 @@
 package zeroadv.position
 
-import zeroadv.{BeaconSpotting, PositionedBeacon, BeaconSpottings, PositionedAgents}
+import zeroadv._
 import com.typesafe.scalalogging.slf4j.Logging
+import zeroadv.PositionedAgents
+import zeroadv.BeaconSpotting
+import zeroadv.BeaconSpottings
+import zeroadv.PositionedBeacon
 
 class BeaconPosFromSpottings(
   beaconDistance: BeaconDistance,
@@ -15,7 +19,14 @@ class BeaconPosFromSpottings(
       (agent, timedRssi) <- spottings.history
       positionedAgent <- agents.agents.find(_.agent == agent)
     } yield {
-      val dist = beaconDistance.distanceToBeacon(BeaconSpotting(spottings.beacon, agent, timedRssi.head))
+      val rssis = timedRssi.map(_.rssi).sorted
+      val rssi = if (rssis.size > 2) {
+        rssis.drop(1).dropRight(1).sum / (rssis.size - 2)
+      } else {
+        rssis.head
+      }
+
+      val dist = beaconDistance.distanceToBeacon(BeaconSpotting(spottings.beacon, agent, TimedRssi(null, rssi)))
       (positionedAgent.pos, dist)
     }
 
