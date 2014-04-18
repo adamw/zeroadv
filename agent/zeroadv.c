@@ -167,12 +167,12 @@ static void cmd_lescan(int dev_id, adv_cb *cb)
 {
 	int err, dd;
 	uint8_t own_type = 0x00;
-	uint8_t scan_type = 0x01;
+	uint8_t scan_type = 0x00; // passive scan - not sending scan responses
 	uint8_t filter_type = 0;
 	uint8_t filter_policy = 0x00;
-	uint16_t interval = htobs(0x0010);
+	uint16_t interval = htobs(0x0010); 
 	uint16_t window = htobs(0x0010);
-	uint8_t filter_dup = 1;	
+	uint8_t filter_dup = 0;	// not filtering duplicates 
 
 	if (dev_id < 0)
 		dev_id = hci_get_route(NULL);
