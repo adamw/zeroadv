@@ -49,9 +49,13 @@ object PositionsGui extends SimpleSwingApplication with PositionModule with DbMo
     system.actorOf(Props[DevNullActor])
   }
 
+  lazy val statsActor = system.actorOf(Props(wire[StatsActor]))
+  system.scheduler.schedule(1.second, 1.second, statsActor, LogStats)
+
   lazy val zeroadvSubscriber = new ZeroadvSubscriber({ adv =>
     positioningActor ! adv
     writeEventToMongoActor ! adv
+    statsActor ! adv
   })
   zeroadvSubscriber.subscribeAndListInDaemonThread(allPis)
 
