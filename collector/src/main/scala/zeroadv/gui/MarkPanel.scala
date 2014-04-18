@@ -1,6 +1,6 @@
 package zeroadv.gui
 
-import scala.swing.{Action, BorderPanel, Button}
+import scala.swing.{Swing, Action, BorderPanel, Button}
 import BorderPanel.Position._
 
 class MarkPanel(markStartAction: () => Unit, markEndAction: () => Unit) extends BorderPanel with Runnable {
@@ -49,7 +49,9 @@ class MarkPanel(markStartAction: () => Unit, markEndAction: () => Unit) extends 
   layout(btn) = North
 
   def run() {
-    btn.finishIfAfter60Seconds()
-    repaint()
+    Swing.onEDT {
+      btn.finishIfAfter60Seconds()
+      repaint()
+    }
   }
 }

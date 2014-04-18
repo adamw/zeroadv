@@ -42,7 +42,12 @@ object PositionsGui extends SimpleSwingApplication with PositionModule with DbMo
   lazy val positioningActor = system.actorOf(Props(newBeaconPositioningActor(drawPanel.updateBeacon)))
   positioningActor ! agents
 
-  lazy val writeEventToMongoActor = system.actorOf(Props(newWriteEventToMongoActor))
+  lazy val enableMongo = false
+  lazy val writeEventToMongoActor = if (enableMongo) {
+    system.actorOf(Props(newWriteEventToMongoActor))
+  } else {
+    system.actorOf(Props[DevNullActor])
+  }
 
   lazy val zeroadvSubscriber = new ZeroadvSubscriber({ adv =>
     positioningActor ! adv

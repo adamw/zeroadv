@@ -74,13 +74,17 @@ class DrawPanel(bottomLeft: PosM, topRight: PosM, width: Int, height: Int) exten
   preferredSize = new Dimension(width, height)
 
   def updateBeacon(positionedBeacon: PositionedBeacon) {
-    beacons = beacons + (positionedBeacon.beacon -> positionedBeacon.pos)
-    repaint()
+    Swing.onEDT {
+      beacons = beacons + (positionedBeacon.beacon -> positionedBeacon.pos)
+      repaint()
+    }
   }
 
   def updateAgents(_agents: PositionedAgents) {
-    agents = _agents
-    repaint()
+    Swing.onEDT {
+      agents = _agents
+      repaint()
+    }
   }
 
   reactions += {
