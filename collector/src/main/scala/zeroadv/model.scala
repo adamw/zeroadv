@@ -3,7 +3,9 @@ package zeroadv
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
-sealed trait PositioningEvent
+sealed trait PositioningEvent {
+  def when: DateTime
+}
 
 case class ReceivedAdv(when: DateTime, agent: Agent, adv: Array[Byte], rssi: Int) extends PositioningEvent {
   def advStr = byteArrayToHexString(adv)

@@ -8,8 +8,11 @@ import zeroadv.db.DbModule
 import zeroadv.zeromq.ZeroadvSubscriber
 import com.typesafe.scalalogging.slf4j.Logging
 import scala.concurrent.duration._
+import zeroadv.filter.IncludeOnlyLightGreenBeacon
 
-object PositionsGui extends SimpleSwingApplication with PositionModule with DbModule with Logging {
+object PositionsGui extends SimpleSwingApplication with PositionModule with DbModule
+with IncludeOnlyLightGreenBeacon with Logging {
+
   lazy val system = ActorSystem()
   import system.dispatcher
 
@@ -18,11 +21,6 @@ object PositionsGui extends SimpleSwingApplication with PositionModule with DbMo
     PositionedAgent(Agent("pi2"), PosM(DimM(3), DimM(0))),    // transparent
     PositionedAgent(Agent("pi3"), PosM(DimM(3), DimM(4.5)))   // black
   ))
-
-  override lazy val includeBeaconSpotting = (bs: BeaconSpotting) => bs.beacon match {
-    case IBeaconBeacon(_, 43024, _, _) => true                // light blue
-    case _ => false
-  }
 
   lazy val drawPanel = new DrawPanel(PosM(DimM(-1), DimM(-1)), PosM(DimM(5.5), DimM(5.5)), 400, 400)
   drawPanel.updateAgents(agents)

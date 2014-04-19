@@ -5,6 +5,7 @@ version := "1.0"
 scalaVersion := "2.10.3"
 
 libraryDependencies ++= Seq(
+  "org.encog" % "encog-core" % "3.2.0",
   "org.zeromq" % "jeromq" % "0.3.2",
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
   "org.reactivemongo" %% "reactivemongo" % "0.10.0",
