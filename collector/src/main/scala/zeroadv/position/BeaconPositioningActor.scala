@@ -12,9 +12,8 @@ class BeaconPositioningActor(
   receivedAdvParser: ReceivedAdvParser,
   beaconPosFromSpottings: BeaconPosFromSpottings,
   includeBeaconSpotting: BeaconSpotting => Boolean,
-  positionedBeaconSink: PositionedBeacon => Any) extends Actor with Logging {
-
-  private val spottingsRssisLimit = 10
+  positionedBeaconSink: PositionedBeacon => Any,
+  spottingsRssisLimit: Int) extends Actor with Logging {
 
   private var agents = PositionedAgents(Nil)
   private var beacons = BeaconsSpottings(Map())
