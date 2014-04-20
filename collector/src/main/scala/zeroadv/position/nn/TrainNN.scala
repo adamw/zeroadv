@@ -18,7 +18,7 @@ import org.encog.ml.data.basic.BasicMLDataSet
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation
 import org.encog.Encog
 
-object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with NNConfig with Logging {
+object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with NNConfig with AgentSetup with Logging {
   lazy val system = ActorSystem()
 
   lazy val receivedAdvParser = wire[ReceivedAdvParser]
@@ -51,8 +51,8 @@ object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with N
     logger.info(s"   $pos -> ${spottings.size}")
   }
 
-  val minCoord = -1.0d
-  val maxCoord = 5.5d
+  val minCoord = minDim.coord
+  val maxCoord = maxDim.coord
 
   val minScaled = 0.0d
   val maxScaled = 1.0d
@@ -74,7 +74,7 @@ object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with N
   val allExamples = positionsToSpottings.flatMap { case (pos, spottings) =>
     spottings.foldLeft((BeaconsSpottings(Map()), List[TrainingExample]())) { case ((beaconsSpottings, acc), spotting) =>
       val (beaconSpottings, newBeaconsSpottings) = beaconsSpottings.addSpotting(spotting, spottingsPerAgent)
-      val newExample = if (beaconSpottings.history.size == agentCount && beaconSpottings.history.forall(_._2.size == spottingsPerAgent)) {
+      val newExample = if (beaconSpottings.history.size == agents.size && beaconSpottings.history.forall(_._2.size == spottingsPerAgent)) {
         Some(TrainingExample(beaconSpottings.history, pos))
       } else {
         None
@@ -91,7 +91,7 @@ object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with N
   //
 
   val network = new BasicNetwork()
-  network.addLayer(new BasicLayer(null, true, agentCount * spottingsPerAgent))
+  network.addLayer(new BasicLayer(null, true, agents.size * spottingsPerAgent))
   network.addLayer(new BasicLayer(new ActivationSigmoid(), true, 20))
   network.addLayer(new BasicLayer(new ActivationSigmoid(), false, 2))
   network.getStructure.finalizeStructure()

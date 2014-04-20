@@ -11,18 +11,12 @@ import scala.concurrent.duration._
 import zeroadv.filter.IncludeOnlyLightGreenBeacon
 
 object PositionsGui extends SimpleSwingApplication with PositionModule with DbModule
-with IncludeOnlyLightGreenBeacon with Logging {
+with IncludeOnlyLightGreenBeacon with AgentSetup with Logging {
 
   lazy val system = ActorSystem()
   import system.dispatcher
 
-  lazy val agents = PositionedAgents(List(
-    PositionedAgent(Agent("pi1"), PosM(DimM(0), DimM(2.5))),  // pink
-    PositionedAgent(Agent("pi2"), PosM(DimM(3), DimM(0))),    // transparent
-    PositionedAgent(Agent("pi3"), PosM(DimM(3), DimM(4.5)))   // black
-  ))
-
-  lazy val drawPanel = new DrawPanel(PosM(DimM(-1), DimM(-1)), PosM(DimM(5.5), DimM(5.5)), 400, 400)
+  lazy val drawPanel = new DrawPanel(PosM(minDim, minDim), PosM(maxDim, maxDim), 400, 400)
   drawPanel.updateAgents(agents)
 
   lazy val markPanel = new MarkPanel(
