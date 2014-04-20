@@ -74,7 +74,7 @@ object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with N
   val allExamples = positionsToSpottings.flatMap { case (pos, spottings) =>
     spottings.foldLeft((BeaconsSpottings(Map()), List[TrainingExample]())) { case ((beaconsSpottings, acc), spotting) =>
       val (beaconSpottings, newBeaconsSpottings) = beaconsSpottings.addSpotting(spotting, spottingsPerAgent)
-      val newExample = if (beaconSpottings.history.size == agents.size && beaconSpottings.history.forall(_._2.size == spottingsPerAgent)) {
+      val newExample = if (beaconSpottings.history.size == agents.agents.size && beaconSpottings.history.forall(_._2.size == spottingsPerAgent)) {
         Some(TrainingExample(beaconSpottings.history, pos))
       } else {
         None
@@ -91,7 +91,7 @@ object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with N
   //
 
   val network = new BasicNetwork()
-  network.addLayer(new BasicLayer(null, true, agents.size * spottingsPerAgent))
+  network.addLayer(new BasicLayer(null, true, agents.agents.size * spottingsPerAgent))
   network.addLayer(new BasicLayer(new ActivationSigmoid(), true, 20))
   network.addLayer(new BasicLayer(new ActivationSigmoid(), false, 2))
   network.getStructure.finalizeStructure()
