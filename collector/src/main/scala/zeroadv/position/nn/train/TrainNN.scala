@@ -14,6 +14,7 @@ import org.encog.ml.data.basic.BasicMLDataSet
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation
 import org.encog.Encog
 import zeroadv.position.nn.{NNModule, NN, NNConfig, NNOutputScaling}
+import org.encog.ml.train.strategy.ResetStrategy
 
 class TrainNN(
   nnOutputScaling: NNOutputScaling,
@@ -21,7 +22,7 @@ class TrainNN(
 
   def train(allExamples: Iterable[TrainingExample]): NN = {
     val random = new Random()
-    val (trainingExamples, testExamples) = random.shuffle(allExamples).splitAt((allExamples.size * 0.9).toInt)
+    val (trainingExamples, testExamples) = random.shuffle(allExamples).splitAt((allExamples.size * 0.8).toInt)
 
     val network = new BasicNetwork()
     network.addLayer(new BasicLayer(null, true, nnConfig.nnInputSize))
@@ -38,6 +39,7 @@ class TrainNN(
     )
 
     val train = new ResilientPropagation(network, trainingSet)
+    train.addStrategy(new ResetStrategy(0.03, 1000))
 
     var epoch = 1
     val maxLastErrors = 100
@@ -49,7 +51,7 @@ class TrainNN(
       lastErrors.enqueue(error)
       if (lastErrors.size > maxLastErrors) lastErrors.dequeue()
       epoch += 1
-    } while (epoch <= maxLastErrors || lastErrors.max - lastErrors.min > 0.0001)
+    } while (epoch <= maxLastErrors || lastErrors.max - lastErrors.min > 0.0001 || lastErrors.last > 0.02)
     train.finishTraining()
 
     for (testExample <- testExamples) {
