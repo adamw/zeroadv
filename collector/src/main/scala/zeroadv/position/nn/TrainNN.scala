@@ -24,7 +24,7 @@ class TrainNN(
 
     val network = new BasicNetwork()
     network.addLayer(new BasicLayer(null, true, nnConfig.nnInputSize))
-    nnConfig.hiddenLayers.foreach { count =>
+    nnConfig.nnHiddenLayers.foreach { count =>
       network.addLayer(new BasicLayer(new ActivationSigmoid(), true, count))
     }
     network.addLayer(new BasicLayer(new ActivationSigmoid(), false, 2))
