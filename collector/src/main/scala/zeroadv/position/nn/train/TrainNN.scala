@@ -13,7 +13,7 @@ import org.encog.engine.network.activation.ActivationSigmoid
 import org.encog.ml.data.basic.BasicMLDataSet
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation
 import org.encog.Encog
-import zeroadv.position.nn.{NN, NNConfig, NNOutputScaling}
+import zeroadv.position.nn.{NNModule, NN, NNConfig, NNOutputScaling}
 
 class TrainNN(
   nnOutputScaling: NNOutputScaling,
@@ -49,7 +49,7 @@ class TrainNN(
       lastErrors.enqueue(error)
       if (lastErrors.size > maxLastErrors) lastErrors.dequeue()
       epoch += 1
-    } while (epoch <= maxLastErrors || lastErrors.max - lastErrors.min > 0.001)
+    } while (epoch <= maxLastErrors || lastErrors.max - lastErrors.min > 0.0001)
     train.finishTraining()
 
     for (testExample <- testExamples) {
@@ -71,21 +71,13 @@ class TrainNN(
   }
 }
 
-object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with AgentSetup with Logging {
+object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with AgentSetup with NNModule with Logging {
   lazy val system = ActorSystem()
-
   lazy val receivedAdvParser = wire[ReceivedAdvParser]
+  lazy val loadTrainingData: LoadTrainingData = wire[LoadTrainingData]
+  lazy val trainNN: TrainNN = wire[TrainNN]
 
-  lazy val nnConfig = NNConfig(agents.agents.size, 4, List(12))
-
-  lazy val loadTrainingData = new LoadTrainingData(receivedAdvParser, eventCollection, includeBeaconSpotting,
-    nnConfig)
-
-  lazy val nnOutputScaling = new NNOutputScaling(minDim.coord, maxDim.coord)
-
-  lazy val trainNN = new TrainNN(nnOutputScaling, nnConfig)
-
-  val allExamples = loadTrainingData.load()
+  lazy val allExamples = loadTrainingData.load()
   val nn = trainNN.train(allExamples)
   nn.saveToFile()
 
