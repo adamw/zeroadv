@@ -2,7 +2,8 @@ package zeroadv.position.nn
 
 import org.encog.neural.networks.BasicNetwork
 import zeroadv.{PosM, TimedRssi, Agent}
-import java.io.{FileInputStream, DataInputStream, DataOutputStream, FileOutputStream}
+import java.io.File
+import org.encog.persist.EncogDirectoryPersistence
 
 class NN(nnOutputScaling: NNOutputScaling, nnConfig: NNConfig, basicNetwork: BasicNetwork) {
 
@@ -19,18 +20,12 @@ class NN(nnOutputScaling: NNOutputScaling, nnConfig: NNConfig, basicNetwork: Bas
   }
 
   def saveToFile() {
-    val encoded = Array.ofDim[Double](basicNetwork.encodedArrayLength)
-    basicNetwork.encodeToArray(encoded)
-
-    val dos = new DataOutputStream(new FileOutputStream(NN.FileName))
-    dos.writeInt(encoded.size)
-    encoded.foreach(dos.writeDouble)
-    dos.close()
+    EncogDirectoryPersistence.saveObject(new File(NN.FileName), basicNetwork)
   }
 }
 
 object NN {
-  private val FileName = "/Users/adamw/projects/zeroadv/nn.bin"
+  private val FileName = "/Users/adamw/projects/zeroadv/nn.eg"
 
   def trimAndValidateInput(nnConfig: NNConfig, input: Map[Agent, List[TimedRssi]]): Option[Map[Agent, List[TimedRssi]]] = {
     val trimmedInput = input.mapValues(_.take(nnConfig.spottingsPerAgent))
@@ -49,15 +44,7 @@ object NN {
     .toArray
 
   def loadFromFile(nnOutputScaling: NNOutputScaling, nnConfig: NNConfig): NN = {
-    val dis = new DataInputStream(new FileInputStream(FileName))
-    val size = dis.readInt()
-    val repr = Array.ofDim[Double](size)
-    for (i <- 0 until size) repr(i) = dis.readDouble()
-    dis.close()
-
-    val bn = new BasicNetwork()
-    bn.decodeFromArray(repr)
-
+    val bn = EncogDirectoryPersistence.loadObject(new File(FileName)).asInstanceOf[BasicNetwork]
     new NN(nnOutputScaling, nnConfig, bn)
   }
 }
