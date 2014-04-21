@@ -1,4 +1,4 @@
-package zeroadv.position.nn
+package zeroadv.position.nn.train
 
 import akka.actor.ActorSystem
 import zeroadv.db.DbModule
@@ -13,6 +13,7 @@ import org.encog.engine.network.activation.ActivationSigmoid
 import org.encog.ml.data.basic.BasicMLDataSet
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation
 import org.encog.Encog
+import zeroadv.position.nn.{NN, NNConfig, NNOutputScaling}
 
 class TrainNN(
   nnOutputScaling: NNOutputScaling,

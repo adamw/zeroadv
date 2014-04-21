@@ -1,4 +1,4 @@
-package zeroadv.position.nn
+package zeroadv.position.nn.train
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -10,6 +10,7 @@ import zeroadv.MarkPosition
 import com.typesafe.scalalogging.slf4j.Logging
 import zeroadv.position.ReceivedAdvParser
 import zeroadv.db.EventCollection
+import zeroadv.position.nn.NNConfig
 
 class LoadTrainingData(
   receivedAdvParser: ReceivedAdvParser,
