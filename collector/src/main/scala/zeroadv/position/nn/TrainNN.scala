@@ -14,14 +14,9 @@ import org.encog.ml.data.basic.BasicMLDataSet
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation
 import org.encog.Encog
 
-class TrainNN(minCoord: Double, maxCoord: Double, inputLayer: Int, hiddenLayers: List[Int]) {
-  private val minScaled = 0.0d
-  private val maxScaled = 1.0d
+class TrainNN(nnOutputScaling: NNOutputScaling, inputLayer: Int, hiddenLayers: List[Int]) extends Logging {
 
-  private def scaleFromCoord(coord: DimM): Double = (coord.coord - minCoord) / (maxCoord - minCoord) * (maxScaled - minScaled) + minScaled
-  private def scaleToCoord(scaled: Double): DimM = DimM((scaled - minScaled) / (maxScaled - minScaled) * (maxCoord - minCoord) + minCoord)
-
-  def train(allExamples: Iterable[TrainingExample]) {
+  def train(allExamples: Iterable[TrainingExample]): NN = {
     val random = new Random()
     val (trainingExamples, testExamples) = random.shuffle(allExamples).splitAt((allExamples.size * 0.9).toInt)
 
@@ -36,36 +31,40 @@ class TrainNN(minCoord: Double, maxCoord: Double, inputLayer: Int, hiddenLayers:
 
     val trainingSet = new BasicMLDataSet(
       trainingExamples.map(_.inputToDoubleArray).toArray,
-      trainingExamples.map(_.outputToDimMArray.map(scaleFromCoord)).toArray
+      trainingExamples.map(_.outputToDimMArray.map(nnOutputScaling.scaleFromCoord)).toArray
     )
 
     val train = new ResilientPropagation(network, trainingSet)
 
     var epoch = 1
-
+    val maxLastErrors = 100
+    val lastErrors = collection.mutable.Queue[Double]()
     do {
       train.iteration()
-      println("Epoch #" + epoch + " Error:" + train.getError)
+      val error = train.getError
+      logger.info("Epoch #" + epoch + ", error: " + error)
+      lastErrors.enqueue(error)
+      if (lastErrors.size > maxLastErrors) lastErrors.dequeue()
       epoch += 1
-    } while (epoch <= 1000)
+    } while (epoch <= maxLastErrors || lastErrors.max - lastErrors.min > 0.001)
     train.finishTraining()
 
     for (testExample <- testExamples) {
       val output = Array.ofDim[Double](2)
       network.compute(testExample.inputToDoubleArray, output)
-      println("%.4f -> %.4f, %.4f -> %.4f (%.4f, %.4f)".format(
-        testExample.output.x.coord, scaleToCoord(output(0)).coord,
-        testExample.output.y.coord, scaleToCoord(output(1)).coord,
+      logger.debug("%.4f -> %.4f, %.4f -> %.4f (%.4f, %.4f)".format(
+        testExample.output.x.coord, nnOutputScaling.scaleToCoord(output(0)).coord,
+        testExample.output.y.coord, nnOutputScaling.scaleToCoord(output(1)).coord,
         output(0), output(1)))
     }
 
-    println("Train error: " + train.getError)
-    println("Test error: " + network.calculateError(new BasicMLDataSet(
+    logger.info("Train error: " + train.getError)
+    logger.info("Test error: " + network.calculateError(new BasicMLDataSet(
       testExamples.map(_.inputToDoubleArray).toArray,
-      testExamples.map(_.outputToDimMArray.map(scaleFromCoord)).toArray
+      testExamples.map(_.outputToDimMArray.map(nnOutputScaling.scaleFromCoord)).toArray
     )))
 
-    Encog.getInstance().shutdown()
+    new NN(network, nnOutputScaling)
   }
 }
 
@@ -77,12 +76,15 @@ object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with N
   lazy val loadTrainingData = new LoadTrainingData(receivedAdvParser, eventCollection, includeBeaconSpotting,
     spottingsPerAgent, agents.agents.size)
 
-  lazy val trainNN = new TrainNN(minDim.coord, maxDim.coord, agents.agents.size * spottingsPerAgent, List(18))
+  lazy val nnOutputScaling = new NNOutputScaling(minDim.coord, maxDim.coord)
+
+  lazy val trainNN = new TrainNN(nnOutputScaling, agents.agents.size * spottingsPerAgent, List(12))
 
   val allExamples = loadTrainingData.load()
+  val nn = trainNN.train(allExamples)
+  nn.saveToFile()
 
-  trainNN.train(allExamples)
-
+  Encog.getInstance().shutdown()
   system.shutdown()
   system.awaitTermination()
   sys.exit(0)
