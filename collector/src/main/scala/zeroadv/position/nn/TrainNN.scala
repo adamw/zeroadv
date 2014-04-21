@@ -68,17 +68,19 @@ class TrainNN(nnOutputScaling: NNOutputScaling, inputLayer: Int, hiddenLayers: L
   }
 }
 
-object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with NNConfig with AgentSetup with Logging {
+object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with AgentSetup with Logging {
   lazy val system = ActorSystem()
 
   lazy val receivedAdvParser = wire[ReceivedAdvParser]
 
+  lazy val nnConfig = NNConfig(agents.agents.size, 4)
+
   lazy val loadTrainingData = new LoadTrainingData(receivedAdvParser, eventCollection, includeBeaconSpotting,
-    spottingsPerAgent, agents.agents.size)
+    nnConfig)
 
   lazy val nnOutputScaling = new NNOutputScaling(minDim.coord, maxDim.coord)
 
-  lazy val trainNN = new TrainNN(nnOutputScaling, agents.agents.size * spottingsPerAgent, List(12))
+  lazy val trainNN = new TrainNN(nnOutputScaling, nnConfig.nnInputSize, List(12))
 
   val allExamples = loadTrainingData.load()
   val nn = trainNN.train(allExamples)

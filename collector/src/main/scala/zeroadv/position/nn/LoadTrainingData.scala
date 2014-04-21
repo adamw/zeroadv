@@ -15,8 +15,7 @@ class LoadTrainingData(
   receivedAdvParser: ReceivedAdvParser,
   eventCollection: EventCollection,
   includeBeaconSpotting: BeaconSpotting => Boolean,
-  spottingsPerAgent: Int,
-  agentsCount: Int) extends Logging {
+  nnConfig: NNConfig) extends Logging {
 
   def load(): Iterable[TrainingExample] = {
     val allEvents = Await.result(eventCollection.find(), Duration.Inf)
@@ -49,8 +48,8 @@ class LoadTrainingData(
 
     val allExamples = positionsToSpottings.flatMap { case (pos, spottings) =>
       spottings.foldLeft((BeaconsSpottings(Map()), List[TrainingExample]())) { case ((beaconsSpottings, acc), spotting) =>
-        val (beaconSpottings, newBeaconsSpottings) = beaconsSpottings.addSpotting(spotting, spottingsPerAgent)
-        val newExample = if (beaconSpottings.history.size == agentsCount && beaconSpottings.history.forall(_._2.size == spottingsPerAgent)) {
+        val (beaconSpottings, newBeaconsSpottings) = beaconsSpottings.addSpotting(spotting, nnConfig.spottingsPerAgent)
+        val newExample = if (beaconSpottings.history.size == nnConfig.agentsCount && beaconSpottings.history.forall(_._2.size == nnConfig.spottingsPerAgent)) {
           Some(TrainingExample(beaconSpottings.history, pos))
         } else {
           None

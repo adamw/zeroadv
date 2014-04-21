@@ -1,5 +1,5 @@
 package zeroadv.position.nn
 
-trait NNConfig {
-  val spottingsPerAgent = 4
+case class NNConfig(agentsCount: Int, spottingsPerAgent: Int) {
+  def nnInputSize = agentsCount * spottingsPerAgent
 }
