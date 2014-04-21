@@ -14,7 +14,11 @@ import org.encog.ml.data.basic.BasicMLDataSet
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation
 import org.encog.Encog
 
-class TrainNN(nnOutputScaling: NNOutputScaling, inputLayer: Int, hiddenLayers: List[Int]) extends Logging {
+class TrainNN(
+  nnOutputScaling: NNOutputScaling,
+  inputLayer: Int,
+  hiddenLayers: List[Int],
+  nnFactory: NN.Factory) extends Logging {
 
   def train(allExamples: Iterable[TrainingExample]): NN = {
     val random = new Random()
@@ -64,7 +68,7 @@ class TrainNN(nnOutputScaling: NNOutputScaling, inputLayer: Int, hiddenLayers: L
       testExamples.map(_.outputToDimMArray.map(nnOutputScaling.scaleFromCoord)).toArray
     )))
 
-    new NN(network, nnOutputScaling)
+    nnFactory(network)
   }
 }
 
@@ -80,7 +84,8 @@ object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with A
 
   lazy val nnOutputScaling = new NNOutputScaling(minDim.coord, maxDim.coord)
 
-  lazy val trainNN = new TrainNN(nnOutputScaling, nnConfig.nnInputSize, List(12))
+  lazy val trainNN = new TrainNN(nnOutputScaling, nnConfig.nnInputSize, List(12),
+    NN.nnForBasicNetwork(nnOutputScaling, nnConfig))
 
   val allExamples = loadTrainingData.load()
   val nn = trainNN.train(allExamples)

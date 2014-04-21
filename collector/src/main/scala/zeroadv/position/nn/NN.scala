@@ -1,19 +1,25 @@
 package zeroadv.position.nn
 
+import zeroadv._
 import org.encog.neural.networks.BasicNetwork
 import zeroadv.{PosM, TimedRssi, Agent}
 import java.io.{FileInputStream, DataInputStream, DataOutputStream, FileOutputStream}
 
-class NN(basicNetwork: BasicNetwork, nnOutputScaling: NNOutputScaling) {
+class NN(nnOutputScaling: NNOutputScaling, nnConfig: NNConfig, basicNetwork: BasicNetwork) {
 
-  def forInput(input: Map[Agent, List[TimedRssi]]): PosM = {
-    val output = Array.ofDim[Double](2)
-    basicNetwork.compute(NN.inputToDoubleArray(input), output)
+  def forInput(input: Map[Agent, List[TimedRssi]]): Option[PosM] = {
+    val trimmedInput = input.mapValues(_.take(nnConfig.spottingsPerAgent))
+    if (trimmedInput.size != nnConfig.agentsCount || trimmedInput.exists(_._2.size != nnConfig.spottingsPerAgent)) {
+      None
+    } else {
+      val output = Array.ofDim[Double](2)
+      basicNetwork.compute(NN.inputToDoubleArray(input), output)
 
-    PosM(
-      nnOutputScaling.scaleToCoord(output(0)),
-      nnOutputScaling.scaleToCoord(output(1))
-    )
+      Some(PosM(
+        nnOutputScaling.scaleToCoord(output(0)),
+        nnOutputScaling.scaleToCoord(output(1))
+      ))
+    }
   }
 
   def saveToFile() {
@@ -30,6 +36,8 @@ class NN(basicNetwork: BasicNetwork, nnOutputScaling: NNOutputScaling) {
 object NN {
   private val FileName = "/Users/adamw/projects/zeroadv/nn.bin"
 
+  type Factory = BasicNetwork => NN
+
   def inputToDoubleArray(input: Map[Agent, List[TimedRssi]]) = input
     .toList
     .sortBy(_._1.name)
@@ -37,7 +45,9 @@ object NN {
     .map(_.rssi.toDouble)
     .toArray
 
-  def loadFromFile(nnOutputScaling: NNOutputScaling): NN = {
+  def nnForBasicNetwork(nnOutputScaling: NNOutputScaling, nnConfig: NNConfig)(basicNetwork: BasicNetwork) = wire[NN]
+
+  def loadFromFile(nnFactory: Factory): NN = {
     val dis = new DataInputStream(new FileInputStream(FileName))
     val size = dis.readInt()
     val repr = Array.ofDim[Double](size)
@@ -47,6 +57,6 @@ object NN {
     val bn = new BasicNetwork()
     bn.decodeFromArray(repr)
 
-    new NN(bn, nnOutputScaling)
+    nnFactory(bn)
   }
 }
