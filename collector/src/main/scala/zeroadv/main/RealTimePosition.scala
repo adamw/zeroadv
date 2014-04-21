@@ -7,7 +7,7 @@ import zeroadv.zeromq.ZeroadvSubscriber
 object RealTimePosition extends App {
   val modules = new PositionModule {
     lazy val system = ActorSystem()
-    lazy val positioningActor = system.actorOf(Props(newBeaconPositioningActor(_ => ())))
+    lazy val positioningActor = system.actorOf(Props(newBeaconPositioningActor(distanceBasedBeaconPos, _ => ())))
     lazy val zeroadvSubscriber = new ZeroadvSubscriber(positioningActor ! _)
   }
 

@@ -9,6 +9,7 @@ import zeroadv.zeromq.ZeroadvSubscriber
 import com.typesafe.scalalogging.slf4j.Logging
 import scala.concurrent.duration._
 import zeroadv.filter.IncludeOnlyLightGreenBeacon
+import java.awt.Color
 
 object PositionsGui extends SimpleSwingApplication with PositionModule with DbModule
 with IncludeOnlyLightGreenBeacon with AgentSetup with Logging {
@@ -31,8 +32,13 @@ with IncludeOnlyLightGreenBeacon with AgentSetup with Logging {
   )
   system.scheduler.schedule(1.second, 1.second, markPanel)
 
-  lazy val positioningActor = system.actorOf(Props(newBeaconPositioningActor(drawPanel.updateBeacon)))
-  positioningActor ! agents
+  lazy val distanceBasedPositioningActor = system.actorOf(Props(newBeaconPositioningActor(distanceBasedBeaconPos,
+    drawPanel.updateBeacon(Color.GREEN, _))))
+  lazy val nnBasedPositioningActor = system.actorOf(Props(newBeaconPositioningActor(nnBasedBeaconPos,
+    drawPanel.updateBeacon(Color.BLUE, _))))
+
+  distanceBasedPositioningActor ! agents
+  nnBasedPositioningActor ! agents
 
   lazy val enableMongo = true
   lazy val writeEventToMongoActor = if (enableMongo) {
@@ -45,7 +51,8 @@ with IncludeOnlyLightGreenBeacon with AgentSetup with Logging {
   system.scheduler.schedule(1.second, 1.second, statsActor, LogStats)
 
   lazy val zeroadvSubscriber = new ZeroadvSubscriber({ adv =>
-    positioningActor ! adv
+    distanceBasedPositioningActor ! adv
+    nnBasedPositioningActor ! adv
     writeEventToMongoActor ! adv
     statsActor ! adv
   })

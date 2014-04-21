@@ -31,7 +31,7 @@ class DrawPanel(bottomLeft: PosM, topRight: PosM, width: Int, height: Int) exten
     DimM((height-y)/height*heightM.coord) + bottomLeft.y
   )
 
-  private var beacons = Map[Beacon, PosM]()
+  private var coloredBeacons = Map[Color, Map[Beacon, PosM]]()
   private var agents = PositionedAgents(Nil)
 
   override protected def paintComponent(g: Graphics2D) = {
@@ -59,11 +59,16 @@ class DrawPanel(bottomLeft: PosM, topRight: PosM, width: Int, height: Int) exten
   }
 
   private def paintBeacons(g: Graphics2D) {
-    beacons.foreach { case (b, p) => paintBeacon(g, b, p) }
+    for {
+      (color, beacons) <- coloredBeacons
+      (beacon, pos) <- beacons
+    } {
+      paintBeacon(g, beacon, pos, color)
+    }
   }
 
-  private def paintBeacon(g: Graphics2D, beacon: Beacon, posM: PosM) {
-    g.setColor(Color.BLUE)
+  private def paintBeacon(g: Graphics2D, beacon: Beacon, posM: PosM, color: Color) {
+    g.setColor(color)
 
     val (x, y) = posMToPoint(posM)
     val r = 20
@@ -73,9 +78,11 @@ class DrawPanel(bottomLeft: PosM, topRight: PosM, width: Int, height: Int) exten
 
   preferredSize = new Dimension(width, height)
 
-  def updateBeacon(positionedBeacon: PositionedBeacon) {
+  def updateBeacon(color: Color, positionedBeacon: PositionedBeacon) {
     Swing.onEDT {
-      beacons = beacons + (positionedBeacon.beacon -> positionedBeacon.pos)
+      val currentBeaconsForColor = coloredBeacons.getOrElse(color, Map[Beacon, PosM]())
+      coloredBeacons = coloredBeacons + (color ->
+        (currentBeaconsForColor + (positionedBeacon.beacon -> positionedBeacon.pos)))
       repaint()
     }
   }
