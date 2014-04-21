@@ -16,17 +16,15 @@ import org.encog.Encog
 
 class TrainNN(
   nnOutputScaling: NNOutputScaling,
-  inputLayer: Int,
-  hiddenLayers: List[Int],
-  nnFactory: NN.Factory) extends Logging {
+  nnConfig: NNConfig) extends Logging {
 
   def train(allExamples: Iterable[TrainingExample]): NN = {
     val random = new Random()
     val (trainingExamples, testExamples) = random.shuffle(allExamples).splitAt((allExamples.size * 0.9).toInt)
 
     val network = new BasicNetwork()
-    network.addLayer(new BasicLayer(null, true, inputLayer))
-    hiddenLayers.foreach { count =>
+    network.addLayer(new BasicLayer(null, true, nnConfig.nnInputSize))
+    nnConfig.hiddenLayers.foreach { count =>
       network.addLayer(new BasicLayer(new ActivationSigmoid(), true, count))
     }
     network.addLayer(new BasicLayer(new ActivationSigmoid(), false, 2))
@@ -68,7 +66,7 @@ class TrainNN(
       testExamples.map(_.outputToDimMArray.map(nnOutputScaling.scaleFromCoord)).toArray
     )))
 
-    nnFactory(network)
+    new NN(nnOutputScaling, nnConfig, network)
   }
 }
 
@@ -77,15 +75,14 @@ object TrainNN extends App with DbModule with IncludeOnlyLightGreenBeacon with A
 
   lazy val receivedAdvParser = wire[ReceivedAdvParser]
 
-  lazy val nnConfig = NNConfig(agents.agents.size, 4)
+  lazy val nnConfig = NNConfig(agents.agents.size, 4, List(12))
 
   lazy val loadTrainingData = new LoadTrainingData(receivedAdvParser, eventCollection, includeBeaconSpotting,
     nnConfig)
 
   lazy val nnOutputScaling = new NNOutputScaling(minDim.coord, maxDim.coord)
 
-  lazy val trainNN = new TrainNN(nnOutputScaling, nnConfig.nnInputSize, List(12),
-    NN.nnForBasicNetwork(nnOutputScaling, nnConfig))
+  lazy val trainNN = new TrainNN(nnOutputScaling, nnConfig)
 
   val allExamples = loadTrainingData.load()
   val nn = trainNN.train(allExamples)

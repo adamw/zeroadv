@@ -1,6 +1,5 @@
 package zeroadv.position.nn
 
-import zeroadv._
 import org.encog.neural.networks.BasicNetwork
 import zeroadv.{PosM, TimedRssi, Agent}
 import java.io.{FileInputStream, DataInputStream, DataOutputStream, FileOutputStream}
@@ -36,8 +35,6 @@ class NN(nnOutputScaling: NNOutputScaling, nnConfig: NNConfig, basicNetwork: Bas
 object NN {
   private val FileName = "/Users/adamw/projects/zeroadv/nn.bin"
 
-  type Factory = BasicNetwork => NN
-
   def inputToDoubleArray(input: Map[Agent, List[TimedRssi]]) = input
     .toList
     .sortBy(_._1.name)
@@ -45,9 +42,7 @@ object NN {
     .map(_.rssi.toDouble)
     .toArray
 
-  def nnForBasicNetwork(nnOutputScaling: NNOutputScaling, nnConfig: NNConfig)(basicNetwork: BasicNetwork) = wire[NN]
-
-  def loadFromFile(nnFactory: Factory): NN = {
+  def loadFromFile(nnOutputScaling: NNOutputScaling, nnConfig: NNConfig): NN = {
     val dis = new DataInputStream(new FileInputStream(FileName))
     val size = dis.readInt()
     val repr = Array.ofDim[Double](size)
@@ -57,6 +52,6 @@ object NN {
     val bn = new BasicNetwork()
     bn.decodeFromArray(repr)
 
-    nnFactory(bn)
+    new NN(nnOutputScaling, nnConfig, bn)
   }
 }
