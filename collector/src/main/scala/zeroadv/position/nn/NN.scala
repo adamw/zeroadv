@@ -7,17 +7,14 @@ import java.io.{FileInputStream, DataInputStream, DataOutputStream, FileOutputSt
 class NN(nnOutputScaling: NNOutputScaling, nnConfig: NNConfig, basicNetwork: BasicNetwork) {
 
   def forInput(input: Map[Agent, List[TimedRssi]]): Option[PosM] = {
-    val trimmedInput = input.mapValues(_.take(nnConfig.spottingsPerAgent))
-    if (trimmedInput.size != nnConfig.agentsCount || trimmedInput.exists(_._2.size != nnConfig.spottingsPerAgent)) {
-      None
-    } else {
+    NN.trimAndValidateInput(nnConfig, input).map { trimmedInput =>
       val output = Array.ofDim[Double](2)
-      basicNetwork.compute(NN.inputToDoubleArray(input), output)
+      basicNetwork.compute(NN.inputToDoubleArray(trimmedInput), output)
 
-      Some(PosM(
+      PosM(
         nnOutputScaling.scaleToCoord(output(0)),
         nnOutputScaling.scaleToCoord(output(1))
-      ))
+      )
     }
   }
 
@@ -34,6 +31,15 @@ class NN(nnOutputScaling: NNOutputScaling, nnConfig: NNConfig, basicNetwork: Bas
 
 object NN {
   private val FileName = "/Users/adamw/projects/zeroadv/nn.bin"
+
+  def trimAndValidateInput(nnConfig: NNConfig, input: Map[Agent, List[TimedRssi]]): Option[Map[Agent, List[TimedRssi]]] = {
+    val trimmedInput = input.mapValues(_.take(nnConfig.spottingsPerAgent))
+    if (trimmedInput.size != nnConfig.agentsCount || trimmedInput.exists(_._2.size != nnConfig.spottingsPerAgent)) {
+      None
+    } else {
+      Some(trimmedInput)
+    }
+  }
 
   def inputToDoubleArray(input: Map[Agent, List[TimedRssi]]) = input
     .toList

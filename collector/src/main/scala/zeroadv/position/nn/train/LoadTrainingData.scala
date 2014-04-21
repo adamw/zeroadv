@@ -10,7 +10,7 @@ import zeroadv.MarkPosition
 import com.typesafe.scalalogging.slf4j.Logging
 import zeroadv.position.ReceivedAdvParser
 import zeroadv.db.EventCollection
-import zeroadv.position.nn.NNConfig
+import zeroadv.position.nn.{NN, NNConfig}
 
 class LoadTrainingData(
   receivedAdvParser: ReceivedAdvParser,
@@ -50,11 +50,7 @@ class LoadTrainingData(
     val allExamples = positionsToSpottings.flatMap { case (pos, spottings) =>
       spottings.foldLeft((BeaconsSpottings(Map()), List[TrainingExample]())) { case ((beaconsSpottings, acc), spotting) =>
         val (beaconSpottings, newBeaconsSpottings) = beaconsSpottings.addSpotting(spotting, nnConfig.spottingsPerAgent)
-        val newExample = if (beaconSpottings.history.size == nnConfig.agentsCount && beaconSpottings.history.forall(_._2.size == nnConfig.spottingsPerAgent)) {
-          Some(TrainingExample(beaconSpottings.history, pos))
-        } else {
-          None
-        }
+        val newExample = NN.trimAndValidateInput(nnConfig, beaconSpottings.history).map(TrainingExample(_, pos))
         (newBeaconsSpottings, newExample.map(_ :: acc).getOrElse(acc))
       }._2
     }
